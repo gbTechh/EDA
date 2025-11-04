@@ -1,0 +1,202 @@
+\documentclass[acmlarge]{acmart}
+
+\setcopyright{acmlicensed}
+\copyrightyear{2024}
+\acmYear{2024}
+\acmDOI{XXXXXXX.XXXXXXX}
+
+\acmJournal{POMACS}
+\acmVolume{41}
+\acmNumber{3}
+\acmArticle{111}
+\acmMonth{12}
+
+\begin{document}
+
+\title{Sistema de Detección de Trending Topics usando Count-Min Sketch y Ventanas Deslizantes para Wordcloud en Tiempo Real}
+
+\author{Rodrigo Silva}
+\affiliation{%
+  \institution{Universidad}
+  \city{Ciudad}
+  \country{País}
+}
+
+\begin{abstract}
+Este artículo presenta un sistema eficiente para detección de trending topics en tiempo real utilizando estructuras de datos probabilísticas. El enfoque combina Count-Min Sketch para conteo aproximado, ventanas deslizantes para análisis temporal y Min-Heap para mantenimiento eficiente del top-K. El sistema genera wordclouds dinámicos por ventana temporal, permitiendo visualizar la evolución de temas relevantes. Se demuestra el proceso completo con ejemplos detallados desde el preprocesamiento de texto hasta la generación del wordcloud final.
+\end{abstract}
+
+\keywords{Count-Min Sketch, Trending Topics, Wordcloud, Tiempo Real, Procesamiento de Texto}
+
+\maketitle
+
+\section{Introducción}
+La detección de trending topics en flujos continuos de texto representa un desafío computacional significativo. Plataformas como Twitter y Facebook procesan millones de publicaciones diarias, requiriendo algoritmos que combinen eficiencia en memoria y velocidad de procesamiento. Este trabajo propone un sistema basado en Count-Min Sketch para identificar temas trending en ventanas temporales deslizantes, generando wordclouds que reflejan la relevancia temporal de los temas.
+
+La principal contribución es un pipeline completo que incluye preprocesamiento de texto, conteo probabilístico eficiente y generación de visualizaciones dinámicas, todo ello con complejidad de memoria constante independiente del volumen de datos.
+
+\section{Arquitectura del Sistema}
+
+\subsection{Componentes Principales}
+El sistema consta de tres componentes fundamentales:
+
+\begin{itemize}
+\item \textbf{Preprocesador de Texto}: Estandarización, limpieza y tokenización
+\item \textbf{Count-Min Sketch}: Conteo aproximado de frecuencias
+\item \textbf{Min-Heap}: Mantenimiento eficiente del top-K
+\end{itemize}
+
+\subsection{Flujo de Procesamiento}
+El procesamiento sigue una arquitectura de ventana deslizante donde:
+
+\begin{enumerate}
+\item Se procesan lotes de textos en ventanas de tamaño fijo $k$
+\item Cada ventana genera un wordcloud independiente
+\item Al deslizar la ventana, se descartan los textos más antiguos
+\item Solo se mantiene estado de la ventana actual
+\end{enumerate}
+
+\section{Metodología Detallada}
+
+\subsection{Preprocesamiento de Texto}
+Cada texto sigue un pipeline de transformación:
+
+\textbf{Ejemplo con texto de entrada:}
+\begin{verbatim}
+"El partido de fútbol estuvo INCREÍBLE! #Deporte"
+\end{verbatim}
+
+\textbf{Pasos de preprocesamiento:}
+\begin{enumerate}
+\item \textbf{Minúsculas}: "el partido de fútbol estuvo increíble! \#deporte"
+\item \textbf{Limpieza}: "partido de fútbol estuvo increíble deporte"
+\item \textbf{Stopwords}: "partido fútbol increíble deporte"
+\item \textbf{Tokens finales}: ["partido", "fútbol", "increíble", "deporte"]
+\end{enumerate}
+
+\subsection{Count-Min Sketch en Acción}
+
+El Count-Min Sketch utiliza una matriz de $depth \times width$ para conteo aproximado. Para un sketch de 3×5:
+
+\textbf{Inserción de "fútbol":}
+\begin{itemize}
+\item Hash1("fútbol") = 2 → Incrementar posición [0,2]
+\item Hash2("fútbol") = 4 → Incrementar posición [1,4]  
+\item Hash3("fútbol") = 1 → Incrementar posición [2,1]
+\end{itemize}
+
+\textbf{Estado del Sketch después de múltiples inserciones:}
+\begin{verbatim}
+     Col0 Col1 Col2 Col3 Col4
+Fila0 [ 0 , 0 , 3 , 0 , 1 ]
+Fila1 [ 0 , 1 , 1 , 0 , 2 ]
+Fila2 [ 1 , 2 , 0 , 0 , 1 ]
+\end{verbatim}
+
+\textbf{Consulta de "fútbol":}
+\begin{itemize}
+\item Hash1("fútbol") = 2 → Valor = 3
+\item Hash2("fútbol") = 4 → Valor = 2
+\item Hash3("fútbol") = 1 → Valor = 2
+\item Frecuencia estimada = min(3, 2, 2) = 2
+\end{itemize}
+
+\subsection{Mantenimiento del Top-K con Min-Heap}
+
+El Min-Heap de tamaño $k$ mantiene eficientemente los elementos más frecuentes:
+
+\textbf{Ejemplo con k=3:}
+\begin{enumerate}
+\item Heap inicial vacío: []
+\item Insertar "fútbol" (freq=4): [(4, "fútbol")]
+\item Insertar "partido" (freq=1): [(1, "partido"), (4, "fútbol")]
+\item Insertar "increíble" (freq=1): [(1, "partido"), (4, "fútbol"), (1, "increíble")]
+\item Llega "gol" (freq=2): 2 > mínimo(1) → extraer mínimo, insertar nuevo
+\item Heap final: [(2, "gol"), (4, "fútbol"), (1, "increíble")]
+\end{enumerate}
+
+\section{Experimento y Resultados}
+
+\subsection{Configuración del Experimento}
+Se procesaron 8 textos con los siguientes parámetros:
+\begin{itemize}
+\item Tamaño de ventana: $k = 3$ textos
+\item Top-K: 3 trending topics por ventana
+\item Count-Min Sketch: 3 filas × 1000 columnas
+\end{itemize}
+
+\subsection{Procesamiento por Ventanas}
+
+\textbf{Ventana 1 - Textos [1,2,3]:}
+\begin{itemize}
+\item \textbf{Textos procesados}: 3 textos deportivos
+\item \textbf{Top-3 estimado}: ["fútbol", "gol", "partido"]
+\item \textbf{Frecuencias}: fútbol=4, gol=2, partido=1
+\item \textbf{Wordcloud}: \textbf{FÚTBOL} gol partido
+\end{itemize}
+
+\textbf{Ventana 2 - Textos [2,3,4]:}
+\begin{itemize}
+\item \textbf{Textos procesados}: 2 deportivos + 1 sobre terremoto
+\item \textbf{Top-3 estimado}: ["terremoto", "fútbol", "gol"] 
+\item \textbf{Frecuencias}: terremoto=4, fútbol=3, gol=1
+\item \textbf{Wordcloud}: \textbf{TERREMOTO} fútbol gol
+\end{itemize}
+
+\textbf{Ventana 3 - Textos [3,4,5]:}
+\begin{itemize}
+\item \textbf{Textos procesados}: 1 deportivo + 2 sobre terremoto
+\item \textbf{Top-3 estimado}: ["terremoto", "alerta", "ciencia"]
+\item \textbf{Frecuencias}: terremoto=5, alerta=1, ciencia=1
+\item \textbf{Wordcloud}: \textbf{TERREMOTO} alerta ciencia
+\end{itemize}
+
+\subsection{Análisis de Resultados}
+
+El sistema demostró capacidad para:
+\begin{itemize}
+\item \textbf{Detectar cambios rápidos}: Transición de temas deportivos a emergencia (terremoto)
+\item \textbf{Mantenimiento eficiente}: Uso constante de memoria independiente del número de palabras únicas
+\item \textbf{Respuesta en tiempo real}: Procesamiento incremental por ventanas
+\end{itemize}
+
+\textbf{Evolución de Trending Topics:}
+\begin{verbatim}
+Ventana 1: [fútbol, gol, partido]
+Ventana 2: [terremoto, fútbol, gol]     ← Detección de evento
+Ventana 3: [terremoto, alerta, ciencia] ← Consolidación
+\end{verbatim}
+
+\section{Discusión}
+
+\subsection{Ventajas del Enfoque}
+
+\begin{itemize}
+\item \textbf{Eficiencia en memoria}: Count-Min Sketch usa espacio constante
+\item \textbf{Escalabilidad}: Rendimiento independiente del volumen de datos
+\item \textbf{Actualizaciones incrementales}: Procesamiento por ventanas
+\item \textbf{Tolerancia a colisiones}: Múltiples funciones hash minimizan errores
+\end{itemize}
+
+\subsection{Limitaciones}
+
+\begin{itemize}
+\item \textbf{Conteo aproximado}: Posible sobre-estimación por colisiones
+\item \textbf{Pérdida de histórico}: Solo se mantiene ventana actual
+\item \textbf{Sensibilidad a parámetros}: Tamaño de sketch y número de hashes
+\end{itemize}
+
+\section{Conclusión}
+
+El sistema presentado provee una solución eficiente y escalable para detección de trending topics en tiempo real. La combinación de Count-Min Sketch y ventanas deslizantes permite generar wordclouds dinámicos que reflejan accuratemente la evolución temporal de temas relevantes. El enfoque es particularmente adecuado para aplicaciones que requieren procesamiento de flujos continuos de texto con recursos limitados.
+
+El trabajo futuro incluye la incorporación de detección de burst scores usando EWMA y la extensión a múltiples ventanas temporales simultáneas para capturar patrones a diferentes escalas de tiempo.
+
+\begin{acks}
+Este trabajo fue desarrollado como parte de una investigación sobre estructuras de datos probabilísticas para procesamiento de lenguaje natural en tiempo real.
+\end{acks}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{referencias}
+
+\end{document}
