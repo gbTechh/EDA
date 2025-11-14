@@ -1,0 +1,49 @@
+#include <iostream>
+#include <list>
+
+using namespace std;
+
+template <class T> struct CFd1 {
+  inline unsigned long operator()(T x) { return x; }
+};
+
+template <class T, class S, class Fd, unsigned long Sz> class CHashTable {
+public:
+  S *table;
+  Fd fd;
+
+public:
+  CHashTable() { table = new S[Sz]; }
+  ~CHashTable() { delete[] table; }
+  bool ins(T v) {
+    table[fd(v) % Sz].push_back(v);
+    return 0;
+  }
+
+  bool find(T v) {
+    S &l = table[fd(v) % Sz];
+    typename S::interador i;
+
+    for (i = l.begin(); i != l.end(); ++i) {
+      if (v == *i) {
+        return 1;
+      }
+    }
+    return 0;
+  }
+  bool rem(T v) {
+    table[fd(v) % Sz].remove(v);
+    return 0;
+  }
+};
+
+int main() {
+  CHashTable<int, list<int>, CFd1<int>, 19> ht;
+  ht.ins(11);
+  ht.ins(9);
+  ht.ins(34);
+  ht.ins(23);
+  ht.rem(9);
+
+  return 0;
+}
