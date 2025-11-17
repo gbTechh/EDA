@@ -29,7 +29,7 @@ struct StringHash {
 template <class T, class Compare = ASC<T>> class CHeap {
 private:
   CVector<T> heap;
-  CMap<std::string, int, StringHash, 100> posiciones;
+  CMap<std::string, int, StringHash, 101> posiciones;
   Compare comp;
 
 private:
@@ -173,8 +173,8 @@ public:
     }
     std::cout << std::endl;
 
-    std::cout << "Posiciones: ";
-    posiciones.PrintTable();
+    // std::cout << "Posiciones: ";
+    // posiciones.PrintTable();
   }
 };
 

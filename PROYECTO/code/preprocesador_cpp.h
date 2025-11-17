@@ -37,7 +37,7 @@ private:
       "loss", "match", "score", "goal", "field", "court",
       // Otros comunes
       "all", "any", "both", "each", "few", "more", "most", "other", "some",
-      "such", "no", "not", "only", "own", "same", "than", "too"};
+      "such", "no", "what", "say", "not", "only", "own", "same", "than", "too"};
 
   std::unordered_map<std::string, std::string> lematizador = {
       // Sustantivos plurales
@@ -102,7 +102,7 @@ private:
     std::string resultado;
     for (char c : texto) {
       // Mantener letras, números, apostrofes y guiones
-      if (std::isalnum(c) || c == '\'' || c == '-') {
+      if (std::isalnum(c) || c == '-') {
         resultado += c;
       } else {
         // Reemplazar otros caracteres por espacio

@@ -67,14 +67,29 @@ bool CList::Search(Data &d) {
 
 bool CList::RemFreq(Data &d) {
   Node *current = root;
+  Node *previous = nullptr;
+
   while (current != nullptr) {
     if (current->data.topic == d.topic) {
       current->data.frq--;
       d.frq = current->data.frq;
       d.topic = current->data.topic;
       d.error = current->data.error;
+      if (current->data.frq == 0) {
+        // Reorganizar punteros
+        if (previous == nullptr) {
+          root = current->next;
+        } else {
+          previous->next = current->next;
+        }
+
+        delete current;
+        size--;
+        return true;
+      }
       return true;
     }
+    previous = current;
     current = current->next;
   }
   return false;

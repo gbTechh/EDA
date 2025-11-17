@@ -4,25 +4,28 @@
 
 using namespace std;
 
+// CONSTANTES GLOBALES CONTROLADAS DESDE MAIN
+const unsigned long HASH_SIZE_VENTANA = 1001;
+const unsigned long HASH_SIZE_CEMENTERIO = 3000;
+const int K = 100;
+const int BUCKET_SIZE = 1000;
+const int TOKENS_VENTANA = 0;
+const int DOCUMENTOS_VENTANA = 100000;
+const long long OBJETIVO_DOCUMENTOS = 100000;
 int main() {
-  // INICIAR CRONÓMETRO
   auto inicio = chrono::high_resolution_clock::now();
 
-  Init init = {2, 5, 5, 3, 0};
-  CInit app(init);
-  app.runtest();
-  // app.print();
+  Init init = {K, BUCKET_SIZE, TOKENS_VENTANA, DOCUMENTOS_VENTANA, 0};
+  CInit<HASH_SIZE_VENTANA, HASH_SIZE_CEMENTERIO> app(init);
+  app.runtest(OBJETIVO_DOCUMENTOS);
 
-  // DETENER CRONÓMETRO Y CALCULAR
   auto fin = chrono::high_resolution_clock::now();
   auto duracion = chrono::duration_cast<chrono::milliseconds>(fin - inicio);
 
   cout << "\n⏱️  ====== ESTADÍSTICAS DE TIEMPO ======" << endl;
   cout << "Tiempo total de ejecución: " << duracion.count() << " ms" << endl;
-  cout << "Tiempo total de ejecución: " << (duracion.count() / 1000.0)
-       << " segundos" << endl;
-  cout << "Tiempo total de ejecución: " << (duracion.count() / 60000.0)
-       << " minutos" << endl;
+  cout << "Hash Size Ventana: " << HASH_SIZE_VENTANA << endl;
+  cout << "Hash Size Cementerio: " << HASH_SIZE_CEMENTERIO << endl;
 
   return 0;
 }

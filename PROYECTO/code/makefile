@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -g -O0
 TARGET = programa
 
-SOURCES = main.cpp lista.cpp init.cpp
+SOURCES = main.cpp lista.cpp
 
 OBJECTS = $(SOURCES:.cpp=.o)
 

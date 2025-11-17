@@ -58,7 +58,7 @@ bool CHashMap<T, S, Fd, Sz>::search(T &v) {
 
 template <class T, class S, class Fd, unsigned long Sz>
 bool CHashMap<T, S, Fd, Sz>::remFreq(T &v) {
-  return bucket[fd(v) % Sz].RemFreq(&v);
+  return bucket[fd(v) % Sz].RemFreq(v);
 }
 
 template <class T, class S, class Fd, unsigned long Sz>
