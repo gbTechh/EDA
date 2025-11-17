@@ -8,7 +8,7 @@ int main() {
   // INICIAR CRONÓMETRO
   auto inicio = chrono::high_resolution_clock::now();
 
-  Init init = {100, 100001, 100001, 1000000, 0};
+  Init init = {2, 5, 5, 3, 0};
   CInit app(init);
   app.runtest();
   // app.print();

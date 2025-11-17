@@ -3,6 +3,7 @@
 
 #include "hashmap.h"
 #include "minaux.h"
+#include "vector.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -53,11 +54,13 @@ private:
   vector<string> obtener_top_k();   // Devuelve top-K trending actual
   int obtener_frecuencia_historica(string palabra); // Consulta histórica
   void limpiar_ventana_actual();
+  void actualizar_heap(std::string token);
 
 public:
   CTopic(int k, int bucket_size, int tokens_ventana, int num_doc_ventana);
   void add_cementerio(string token);
   void add_ventana(string token);
+  void rem_freq(CVector<std::string>);
   void iniciar_nueva_ventana();
   void printVentanaActual();
 };
@@ -107,6 +110,21 @@ void CTopic<Sv, Sc>::add_cementerio(string token) {
 }
 
 template <unsigned long Sv, unsigned long Sc>
+void CTopic<Sv, Sc>::actualizar_heap(string token) {
+  Data d = {token, 1, 0};
+  h_ventana.search(d);
+  if (heap.size() < k) {
+    heap.push(d);
+  } else {
+    Data data = heap.top();
+    if (d.frq >= heap.get_min_frequency()) {
+      heap.pop();
+      heap.push(d);
+    }
+  }
+}
+
+template <unsigned long Sv, unsigned long Sc>
 void CTopic<Sv, Sc>::iniciar_nueva_ventana() {
   for (int i = 0; i < Sv; i++) {
     h_ventana.bucket[i].limpiar_lista();
@@ -134,6 +152,14 @@ void CTopic<Sv, Sc>::ejecutar_poda() {
       }
       current = current->next;
     }
+  }
+}
+template <unsigned long Sv, unsigned long Sc>
+void CTopic<Sv, Sc>::rem_freq(CVector<std::string> v_tokens) {
+  for (int i = 0; i < v_tokens.size(); i++) {
+    Data d = {v_tokens[i], 1, 0};
+    h_ventana.search(d);
+    actualizar_heap(v_tokens[i]);
   }
 }
 

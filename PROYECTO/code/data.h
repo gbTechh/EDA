@@ -20,10 +20,12 @@ struct Data {
   std::string topic;
   int frq;
   int error;
+  int ultima_ventana;
 
-  Data() : topic(""), frq(0), error(0) {}
+  Data() : topic(""), frq(0), error(0), ultima_ventana(0) {}
   Data(const std::string &t, int f = 1) : topic(t), frq(f), error(0) {}
-  Data(const std::string &t, int f, int e) : topic(t), frq(f), error(e) {}
+  Data(const std::string &t, int f, int e, int uv = 0)
+      : topic(t), frq(f), error(e), ultima_ventana(uv) {}
 
   Data(const Data &other) = default;
 

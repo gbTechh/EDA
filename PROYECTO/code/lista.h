@@ -28,6 +28,7 @@ public:
   bool Search(Data &d);
   void Ins(Data &data);
   bool Rem(Data &data);
+  bool RemFreq(Data &data);
   void PrintList() const;
   void limpiar_lista();
 };

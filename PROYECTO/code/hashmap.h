@@ -17,6 +17,7 @@ public:
   void ins(T &v);
   bool find(T v);
   bool search(T &v);
+  bool remFreq(T &v);
   bool rem(T v);
   int size();
   void PrintTable() const;
@@ -53,6 +54,11 @@ template <class T, class S, class Fd, unsigned long Sz>
 bool CHashMap<T, S, Fd, Sz>::search(T &v) {
   CList &l = bucket[fd(v) % Sz];
   return l.Search(v);
+}
+
+template <class T, class S, class Fd, unsigned long Sz>
+bool CHashMap<T, S, Fd, Sz>::remFreq(T &v) {
+  return bucket[fd(v) % Sz].RemFreq(&v);
 }
 
 template <class T, class S, class Fd, unsigned long Sz>

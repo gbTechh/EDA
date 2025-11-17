@@ -51,12 +51,28 @@ bool CList::Find(Node *&n) {
   }
   return false;
 }
+
 bool CList::Search(Data &d) {
   Node *current = root;
 
   while (current != nullptr) {
     if (current->data.topic == d.topic) {
       d = current->data;
+      return true;
+    }
+    current = current->next;
+  }
+  return false;
+}
+
+bool CList::RemFreq(Data &d) {
+  Node *current = root;
+  while (current != nullptr) {
+    if (current->data.topic == d.topic) {
+      current->data.frq--;
+      d.frq = current->data.frq;
+      d.topic = current->data.topic;
+      d.error = current->data.error;
       return true;
     }
     current = current->next;
@@ -103,6 +119,7 @@ bool CList::Rem(Data &data) {
 
   return false;
 }
+
 void CList::PrintList() const {
   Node *current = root;
   if (current == nullptr) {

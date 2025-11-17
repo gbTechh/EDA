@@ -21,9 +21,6 @@ void CInit::procesar_ventana() {
     std::string nameDoc = queue_ventana_actual[i];
     CVector<std::string> tokens = m_cache.find(nameDoc);
     // cout << "doc: " << nameDoc << endl;
-    for (std::size_t j = 0; j < tokens.size(); j++) {
-      topic.add_ventana(tokens[j]);
-    }
   }
 }
 
@@ -150,25 +147,21 @@ void CInit::run() {
     std::string nameDoc = "doc_" + to_string(init.doc_count);
     m_cache.ins(nameDoc, v_tokens);
     queue_ventana_actual.push_back(nameDoc);
+
+    for (int i = 0; i < v_tokens.size(); i++) {
+      topic.add_ventana(v_tokens[i]);
+    }
     for (std::size_t c = 0; c < v_tokens.size(); c++) {
       topic.add_cementerio(v_tokens[c]);
     }
 
     if (init.doc_count >= init.documentos_ventana) {
-      cout << "====VENTANA ACTUAL (" << numVentana + 1 << ") CONTIENE "
-           << queue_ventana_actual.size()
-           << " DOCUMENTOS =========================================" << endl;
-      procesar_ventana();
+      std::string doc = queue_ventana_actual[0];
       queue_ventana_actual.pop_front();
+      CVector<std::string> tokens_rem = m_cache.find(doc);
+      topic.rem_freq(tokens_rem);
       numVentana++;
     }
-  }
-  while (queue_ventana_actual.size() >= init.documentos_ventana) {
-    std::cout << "==== PROCESANDO VENTANA FINAL " << (numVentana + 1)
-              << " ====" << std::endl;
-    procesar_ventana();
-    queue_ventana_actual.pop_front();
-    numVentana++;
   }
 }
 
@@ -214,7 +207,7 @@ void CInit::runtest() {
   }
 
   // --- Lógica de simulación para 1 millón de documentos ---
-  const long long OBJETIVO_DOCUMENTOS = 1000000;
+  const long long OBJETIVO_DOCUMENTOS = 10;
   long long documentos_procesados_totales = 0;
   size_t num_archivos_reales = archivos_reales.size();
 
@@ -235,35 +228,28 @@ void CInit::runtest() {
     for (size_t i = 0; i < num_archivos_reales; ++i) {
 
       if (documentos_procesados_totales >= OBJETIVO_DOCUMENTOS) {
-        break; // Detener si se alcanza el objetivo exacto
+        break;
       }
 
-      // Usamos el índice 'i' para acceder al archivo real
       std::string ruta_archivo_actual = archivos_reales[i];
 
-      init.doc_count++; // init.doc_count ahora será el ID global del documento
-                        // (1 a 1M)
+      init.doc_count++;
       documentos_procesados_totales++;
 
-      // El nombre del documento en caché debe ser único, por ejemplo, "doc_1",
-      // "doc_2", etc.
       std::string nameDoc = "doc_" + std::to_string(init.doc_count);
 
       std::cout << "\n=== PROCESANDO DOCUMENTO " << init.doc_count << std::endl;
+      std::string texto_completo = leer_archivo(archivos[i]);
+      CVector<std::string> v_tokens =
+          preprocesador.preprocesar_texto(texto_completo);
 
-      // Si el archivo ya está en caché de un ciclo anterior, no es necesario
-      // leerlo ni preprocesarlo de nuevo. Esto es crucial para la eficiencia si
-      // m_cache maneja esto correctamente. Asumimos que m_cache::find maneja la
-      // no existencia devolviendo un CVector vacío o similar si no se
-      // encuentra. Para este ejemplo, leeremos y cachearemos por primera vez si
-      // es necesario.
+      m_cache.ins(nameDoc, v_tokens);
+      queue_ventana_actual.push_back(nameDoc);
 
-      CVector<std::string> v_tokens;
       try {
-        v_tokens = m_cache.find(nameDoc); // Intenta encontrarlo por su nombre
-                                          // único (doc_1, doc_2, etc.)
+        v_tokens = m_cache.find(nameDoc);
+
       } catch (...) {
-        // Si find lanza una excepción porque no existe, entonces lo leemos
         std::string texto_completo = leer_archivo(ruta_archivo_actual);
 
         if (texto_completo.empty()) {
@@ -278,25 +264,22 @@ void CInit::runtest() {
 
         m_cache.ins(nameDoc, v_tokens);
       }
-
+      cout << "DOC: " << nameDoc << endl;
       queue_ventana_actual.push_back(nameDoc);
+      for (int i = 0; i < v_tokens.size(); i++) {
+        cout << "TOKEN: [ " << v_tokens[i] << " , ";
+        topic.add_ventana(v_tokens[i]);
+      }
+      cout << "]\n";
       for (std::size_t c = 0; c < v_tokens.size(); c++) {
         topic.add_cementerio(v_tokens[c]);
       }
 
-      // Lógica de ventana (usa init.doc_count que es el contador global)
       if (init.doc_count >= init.documentos_ventana) {
-        // cout << "====VENTANA ACTUAL (" << numVentana + 1 << ") CONTIENE "
-        //      << queue_ventana_actual.size()
-        //      << " DOCUMENTOS =========================================" <<
-        //      endl;
-        procesar_ventana();
-        // Nota: Si usas pop_front aquí, el sistema de ventanas funciona como
-        // una ventana deslizante. Si quieres ventanas contiguas, tendrías que
-        // manejar el pop_front de otra manera o resetear queue_ventana_actual.
-        // Asumiendo que quieres una ventana deslizante como en tu código
-        // original:
+        std::string doc = queue_ventana_actual[0];
         queue_ventana_actual.pop_front();
+        CVector<std::string> tokens_rem = m_cache.find(doc);
+        topic.rem_freq(tokens_rem);
         numVentana++;
       }
     }
