@@ -18,7 +18,7 @@ void test_hashmap_basico() {
   std::cout << "=== TEST HASHMAP BÁSICO ===" << std::endl;
 
   // HashMap para Data (no para strings directamente)
-  CHashMap<Data, DataHash, 10> hashmap;
+  CHashMap<Data, CList, DataHash, 10> hashmap;
 
   // Test 1: Inserción básica
   Data hello{"hello", 1};
@@ -47,7 +47,7 @@ void test_hashmap_colisiones() {
   std::cout << "\n=== TEST COLISIONES HASH ===" << std::endl;
 
   // HashMap pequeño para forzar colisiones
-  CHashMap<Data, DataHash, 3> hashmap;
+  CHashMap<Data, CList, DataHash, 3> hashmap;
 
   // Estos Data probablemente tendrán el mismo hash % 3
   Data d1{"abc", 1}, d2{"def", 1}, d3{"ghi", 1}, d4{"jkl", 1};
@@ -78,7 +78,7 @@ void test_hashmap_colisiones() {
 void test_hashmap_duplicados() {
   std::cout << "\n=== TEST DUPLICADOS HASHMAP ===" << std::endl;
 
-  CHashMap<Data, DataHash, 5> hashmap;
+  CHashMap<Data, CList, DataHash, 5> hashmap;
 
   // Insertar duplicados
   Data dup{"duplicate", 1};
@@ -103,7 +103,7 @@ void test_hashmap_duplicados() {
 void test_hashmap_vacio() {
   std::cout << "\n=== TEST HASHMAP VACÍO ===" << std::endl;
 
-  CHashMap<Data, DataHash, 5> hashmap;
+  CHashMap<Data, CList, DataHash, 5> hashmap;
 
   // Búsqueda en hashmap vacío
   Data anything{"anything", 1};

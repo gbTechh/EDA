@@ -1,159 +1,321 @@
 #include "init.h"
+#include "data.h"
+#include "vector.h"
+#include <cmath>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+
+namespace fs = std::filesystem;
 
 CInit::CInit(Init _init)
     : topic(_init.k, _init.bucket_size, _init.tokens_ventana,
             _init.documentos_ventana),
       init(_init) {}
 
-void CInit::procesar_documento(const vector<string> &documento) {
-  for (const string &token : documento) {
-    topic.add_ventana(token);
+void CInit::procesar_ventana() {
+  topic.iniciar_nueva_ventana();
+  for (std::size_t i = 0; i < queue_ventana_actual.size(); i++) {
+    std::string nameDoc = queue_ventana_actual[i];
+    CVector<std::string> tokens = m_cache.find(nameDoc);
+    // cout << "doc: " << nameDoc << endl;
+    for (std::size_t j = 0; j < tokens.size(); j++) {
+      topic.add_ventana(tokens[j]);
+    }
   }
 }
 
-void CInit::reprocesar_ventana_completa() {
+std::vector<std::string>
+CInit::leer_documentos_de_carpeta(const std::string &carpeta_path) {
+  std::vector<std::string> archivos;
 
-  topic.iniciar_nueva_ventana();
-
-  for (const auto &documento : deque_ventana_actual) {
-    for (const string &token : documento) {
-      topic.add_ventana(token);
+  try {
+    if (!fs::exists(carpeta_path)) {
+      std::cerr << "Error: La carpeta '" << carpeta_path << "' no existe."
+                << std::endl;
+      return archivos;
     }
+
+    for (const auto &entry : fs::directory_iterator(carpeta_path)) {
+      if (entry.is_regular_file()) {
+        std::string extension = entry.path().extension().string();
+        // Solo procesar archivos de texto
+        if (extension == ".txt" || extension == ".text" || extension == "") {
+          archivos.push_back(entry.path().string());
+        }
+      }
+    }
+
+    std::cout << "Encontrados " << archivos.size() << " archivos en '"
+              << carpeta_path << "'" << std::endl;
+
+  } catch (const fs::filesystem_error &ex) {
+    std::cerr << "Error accediendo a la carpeta: " << ex.what() << std::endl;
   }
+
+  return archivos;
+}
+
+std::string CInit::leer_archivo(const std::string &file_path) {
+  std::ifstream file(file_path);
+  if (!file.is_open()) {
+    std::cerr << "Error: No se pudo abrir el archivo '" << file_path << "'"
+              << std::endl;
+    return "";
+  }
+
+  std::string contenido;
+  std::string linea;
+  while (std::getline(file, linea)) {
+    contenido += linea + " ";
+  }
+
+  file.close();
+  return contenido;
 }
 
 void CInit::run() {
-  vector<vector<string>> todos_documentos = {
-      {"fútbol", "gol", "fútbol"},
-      {"gol", "partido", "basketball"},
-      {"tenis", "fútbol", "golf"},
-      {"terremoto", "alerta", "sismo"},
-      {"alerta", "tsunami", "terremoto"},
-      {"fútbol", "tenis", "golf"},
-      {"crisis", "economía", "mercado"},
-      {"tecnología", "innovación", "digital"},
-      {"clima", "lluvia", "temperatura"},
-      {"salud", "medicina", "hospital"},
-      {"educación", "escuela", "estudiantes"},
-      {"política", "gobierno", "elecciones"},
-      {"deporte", "competencia", "atleta"},
-      {"música", "concierto", "artista"},
-      {"cine", "película", "actor"},
-      {"viaje", "turismo", "avión"},
-      {"comida", "restaurante", "receta"},
-      {"negocio", "empresa", "empleo"},
-      {"ciencia", "investigación", "descubrimiento"},
-      {"animal", "naturaleza", "conservación"},
-      {"coche", "carretera", "conducción"},
-      {"casa", "hogar", "familia"},
-      {"dinero", "inversión", "banco"},
-      {"tiempo", "reloj", "horas"},
-      {"agua", "río", "mar"},
-      {"fuego", "calor", "llama"},
-      {"tierra", "planeta", "naturaleza"},
-      {"aire", "viento", "atmósfera"},
-      {"sol", "luz", "calor"},
-      {"luna", "noche", "estrellas"},
-      {"ciudad", "urbano", "edificio"},
-      {"campo", "rural", "agricultura"},
-      {"ropa", "moda", "vestir"},
-      {"juego", "diversión", "entretenimiento"},
-      {"libro", "lectura", "biblioteca"},
-      {"arte", "creatividad", "expresión"},
-      {"historia", "pasado", "eventos"},
-      {"futuro", "predicción", "tecnología"},
-      {"amor", "relación", "familia"},
-      {"amistad", "compañerismo", "confianza"},
-      {"trabajo", "esfuerzo", "profesión"},
-      {"éxito", "logro", "meta"},
-      {"fracaso", "error", "aprendizaje"},
-      {"paz", "armonía", "tranquilidad"},
-      {"guerra", "conflicto", "batalla"},
-      {"libertad", "derechos", "justicia"},
-      {"seguridad", "protección", "policía"},
-      {"peligro", "riesgo", "advertencia"},
-      {"belleza", "estética", "atractivo"},
-      {"feo", "desagradable", "horror"},
-      {"felicidad", "alegría", "contento"},
-      {"tristeza", "dolor", "pena"},
-      {"miedo", "ansiedad", "preocupación"},
-      {"sorpresa", "inesperado", "asombro"},
-      {"enfado", "enojo", "ira"},
-      {"calma", "paciencia", "serenidad"},
-      {"energía", "fuerza", "potencia"},
-      {"debilidad", "enfermedad", "vulnerabilidad"},
-      {"inteligencia", "sabiduría", "conocimiento"},
-      {"ignorancia", "desconocimiento", "confusión"},
-      {"verdad", "realidad", "hechos"},
-      {"mentira", "engaño", "falsedad"},
-      {"riqueza", "abundancia", "prosperidad"},
-      {"pobreza", "escasez", "necesidad"},
-      {"joven", "juventud", "adolescente"},
-      {"viejo", "vejez", "anciano"},
-      {"niño", "infancia", "juego"},
-      {"adulto", "madurez", "responsabilidad"},
-      {"hombre", "masculino", "varón"},
-      {"mujer", "femenino", "dama"},
-      {"padre", "paternidad", "familia"},
-      {"madre", "maternidad", "cuidado"},
-      {"hijo", "descendencia", "herencia"},
-      {"hermano", "familia", "parentesco"},
-      {"amigo", "compañía", "apoyo"},
-      {"enemigo", "oposición", "conflicto"},
-      {"jefe", "autoridad", "liderazgo"},
-      {"empleado", "trabajador", "subordinado"},
-      {"profesor", "enseñanza", "educación"},
-      {"estudiante", "aprendizaje", "escuela"},
-      {"médico", "salud", "enfermedad"},
-      {"paciente", "tratamiento", "cura"},
-      {"ingeniero", "tecnología", "diseño"},
-      {"científico", "investigación", "experimento"},
-      {"artista", "creación", "expresión"},
-      {"deportista", "atleta", "competencia"},
-      {"cocinero", "comida", "receta"},
-      {"escritor", "libro", "literatura"},
-      {"músico", "instrumento", "melodía"},
-      {"actor", "teatro", "película"},
-      {"piloto", "avión", "vuelo"},
-      {"conductor", "coche", "carretera"},
-      {"agricultor", "campo", "cultivo"},
-      {"pescador", "mar", "pez"},
-      {"minero", "tierra", "mineral"},
-      {"bombero", "fuego", "emergencia"},
-      {"policía", "ley", "seguridad"},
-      {"soldado", "ejército", "defensa"},
-      {"marinero", "barco", "océano"},
-      {"astronauta", "espacio", "nave"},
-      {"periodista", "noticia", "medios"},
-      {"abogado", "ley", "justicia"},
-      {"juez", "tribunal", "sentencia"},
-      {"político", "gobierno", "poder"},
-      {"rey", "monarquía", "corona"},
-      {"presidente", "democracia", "gobierno"},
-      {"líder", "dirección", "influencia"},
-      {"seguidor", "apoyo", "lealtad"}};
+  // vector<vector<string>> todos_documentos = {
+  //     {"fútbol", "gol", "fútbol", "deporte"},           // Doc1
+  //     {"gol", "partido", "fútbol", "estadio"},          // Doc2
+  //     {"tenis", "fútbol", "golf", "deporte"},           // Doc3
+  //     {"terremoto", "alerta", "sismo", "emergencia"},   // Doc4
+  //     {"alerta", "tsunami", "terremoto", "riesgo"},     // Doc5
+  //     {"fútbol", "tenis", "golf", "deporte"},           // Doc6
+  //     {"crisis", "economía", "mercado", "dinero"},      // Doc7
+  //     {"tecnología", "innovación", "digital", "futuro"} // Doc8
+  // };
 
-  for (int i = 0; i < todos_documentos.size(); i++) {
-    cout << "=== AGREGANDO DOCUMENTO " << i << " ===" << endl;
+  std::string carpeta_docs = "docs";
+  std::vector<std::string> archivos = leer_documentos_de_carpeta(carpeta_docs);
+  if (archivos.empty()) {
+    std::cout << "No se encontraron archivos en la carpeta 'docs'. Creando "
+                 "archivos de ejemplo..."
+              << std::endl;
 
-    if (deque_ventana_actual.size() == init.documentos_ventana) {
-      deque_ventana_actual.pop_front();
-      reprocesar_ventana_completa();
+    // Crear carpeta docs si no existe
+    fs::create_directory("docs");
+
+    // Crear algunos archivos de ejemplo
+    std::vector<std::string> documentos_ejemplo = {
+        "Rollins Goes 0-for-4 as Streak Ends PHILADELPHIA -- Jimmy Rollins was "
+        "heading back to the clubhouse when Charlie Manuel put his arm around "
+        "him and offered some encouraging words.",
+        "Mets Beat Phillies 5-2 Behind Strong Pitching NEW YORK -- The New "
+        "York Mets defeated the Philadelphia Phillies 5-2 on Saturday night.",
+        "Yankees Win World Series in Game 7 Thriller NEW YORK -- The New York "
+        "Yankees won their 27th World Series championship with a dramatic Game "
+        "7 victory.",
+        "Phillies Sign Free Agent Pitcher to 3-Year Deal PHILADELPHIA -- The "
+        "Phillies have signed right-handed pitcher to a three-year contract "
+        "worth $30 million.",
+        "Eagles Prepare for Cowboys in NFC East Showdown PHILADELPHIA -- The "
+        "Philadelphia Eagles are getting ready to face the Dallas Cowboys in a "
+        "crucial division game."};
+
+    for (size_t i = 0; i < documentos_ejemplo.size(); i++) {
+      std::string nombre_archivo =
+          "docs/documento_" + std::to_string(i + 1) + ".txt";
+      std::ofstream file(nombre_archivo);
+      if (file.is_open()) {
+        file << documentos_ejemplo[i];
+        file.close();
+        archivos.push_back(nombre_archivo);
+        std::cout << "Creado archivo de ejemplo: " << nombre_archivo
+                  << std::endl;
+      }
     }
-
-    vector<string> documento = todos_documentos[i];
-    deque_ventana_actual.push_back(documento);
-
-    procesar_documento(documento);
-
-    for (const string &token : documento) {
-      topic.add_cementerio(token);
-    }
-
-    // Mostrar estado actual (opcional)
-    cout << "Ventana actual contiene " << deque_ventana_actual.size()
-         << " documentos" << endl;
   }
+  for (std::size_t i = 0; i < archivos.size(); i++) {
+    init.doc_count++;
+    std::cout << "\n=== PROCESANDO DOCUMENTO " << init.doc_count
+              << " ===" << std::endl;
+    std::cout << "Archivo: " << archivos[i] << std::endl;
+    std::string texto_completo = leer_archivo(archivos[i]);
+
+    if (texto_completo.empty()) {
+      std::cout << "Archivo vacío, saltando..." << std::endl;
+      continue;
+    }
+
+    std::cout << "Texto original (primeros 100 chars): "
+              << texto_completo.substr(0, 100) << "..." << std::endl;
+
+    // Preprocesar el texto con Python
+    CVector<std::string> v_tokens =
+        preprocesador.preprocesar_texto(texto_completo);
+
+    std::string nameDoc = "doc_" + to_string(init.doc_count);
+    m_cache.ins(nameDoc, v_tokens);
+    queue_ventana_actual.push_back(nameDoc);
+    for (std::size_t c = 0; c < v_tokens.size(); c++) {
+      topic.add_cementerio(v_tokens[c]);
+    }
+
+    if (init.doc_count >= init.documentos_ventana) {
+      cout << "====VENTANA ACTUAL (" << numVentana + 1 << ") CONTIENE "
+           << queue_ventana_actual.size()
+           << " DOCUMENTOS =========================================" << endl;
+      procesar_ventana();
+      queue_ventana_actual.pop_front();
+      numVentana++;
+    }
+  }
+  while (queue_ventana_actual.size() >= init.documentos_ventana) {
+    std::cout << "==== PROCESANDO VENTANA FINAL " << (numVentana + 1)
+              << " ====" << std::endl;
+    procesar_ventana();
+    queue_ventana_actual.pop_front();
+    numVentana++;
+  }
+}
+
+void CInit::runtest() {
+  std::string carpeta_docs = "docs";
+  std::vector<std::string> archivos_reales =
+      leer_documentos_de_carpeta(carpeta_docs);
+
+  if (archivos_reales.empty()) {
+    // ... (Lógica para crear archivos de ejemplo si la carpeta está vacía) ...
+    std::cout << "No se encontraron archivos en la carpeta 'docs'. Creando "
+                 "archivos de ejemplo..."
+              << std::endl;
+    fs::create_directory("docs");
+    std::vector<std::string> documentos_ejemplo = {
+        "Rollins Goes 0-for-4 as Streak Ends PHILADELPHIA -- Jimmy Rollins was "
+        "heading back to the clubhouse when Charlie Manuel put his arm around "
+        "him and offered some encouraging words.",
+        "Mets Beat Phillies 5-2 Behind Strong Pitching NEW YORK -- The New "
+        "York Mets defeated the Philadelphia Phillies 5-2 on Saturday night.",
+        "Yankees Win World Series in Game 7 Thriller NEW YORK -- The New York "
+        "Yankees won their 27th World Series championship with a dramatic Game "
+        "7 victory.",
+        "Phillies Sign Free Agent Pitcher to 3-Year Deal PHILADELPHIA -- The "
+        "Phillies have signed right-handed pitcher to a three-year contract "
+        "worth $30 million.",
+        "Eagles Prepare for Cowboys in NFC East Showdown PHILADELPHIA -- The "
+        "Philadelphia Eagles are getting ready to face the Dallas Cowboys in a "
+        "crucial division game."};
+
+    for (size_t i = 0; i < documentos_ejemplo.size(); i++) {
+      std::string nombre_archivo =
+          "docs/documento_" + std::to_string(i + 1) + ".txt";
+      std::ofstream file(nombre_archivo);
+      if (file.is_open()) {
+        file << documentos_ejemplo[i];
+        file.close();
+        archivos_reales.push_back(nombre_archivo);
+        std::cout << "Creado archivo de ejemplo: " << nombre_archivo
+                  << std::endl;
+      }
+    }
+  }
+
+  // --- Lógica de simulación para 1 millón de documentos ---
+  const long long OBJETIVO_DOCUMENTOS = 1000000;
+  long long documentos_procesados_totales = 0;
+  size_t num_archivos_reales = archivos_reales.size();
+
+  if (num_archivos_reales == 0) {
+    std::cerr << "Error: No hay archivos reales que procesar." << std::endl;
+    return;
+  }
+
+  // Calcular el número de ciclos completos necesarios
+  long long ciclos_necesarios =
+      std::ceil((double)OBJETIVO_DOCUMENTOS / num_archivos_reales);
+
+  std::cout << "Se necesitaran aproximadamente " << ciclos_necesarios
+            << " ciclos de " << num_archivos_reales
+            << " archivos para llegar a " << OBJETIVO_DOCUMENTOS << std::endl;
+
+  for (long long ciclo = 0; ciclo < ciclos_necesarios; ++ciclo) {
+    for (size_t i = 0; i < num_archivos_reales; ++i) {
+
+      if (documentos_procesados_totales >= OBJETIVO_DOCUMENTOS) {
+        break; // Detener si se alcanza el objetivo exacto
+      }
+
+      // Usamos el índice 'i' para acceder al archivo real
+      std::string ruta_archivo_actual = archivos_reales[i];
+
+      init.doc_count++; // init.doc_count ahora será el ID global del documento
+                        // (1 a 1M)
+      documentos_procesados_totales++;
+
+      // El nombre del documento en caché debe ser único, por ejemplo, "doc_1",
+      // "doc_2", etc.
+      std::string nameDoc = "doc_" + std::to_string(init.doc_count);
+
+      std::cout << "\n=== PROCESANDO DOCUMENTO " << init.doc_count << std::endl;
+
+      // Si el archivo ya está en caché de un ciclo anterior, no es necesario
+      // leerlo ni preprocesarlo de nuevo. Esto es crucial para la eficiencia si
+      // m_cache maneja esto correctamente. Asumimos que m_cache::find maneja la
+      // no existencia devolviendo un CVector vacío o similar si no se
+      // encuentra. Para este ejemplo, leeremos y cachearemos por primera vez si
+      // es necesario.
+
+      CVector<std::string> v_tokens;
+      try {
+        v_tokens = m_cache.find(nameDoc); // Intenta encontrarlo por su nombre
+                                          // único (doc_1, doc_2, etc.)
+      } catch (...) {
+        // Si find lanza una excepción porque no existe, entonces lo leemos
+        std::string texto_completo = leer_archivo(ruta_archivo_actual);
+
+        if (texto_completo.empty()) {
+          std::cout << "Archivo vacío o error de lectura, saltando..."
+                    << std::endl;
+          continue;
+        }
+
+        // Preprocesar el texto con Python
+        CVector<std::string> v_tokens =
+            preprocesador.preprocesar_texto(texto_completo);
+
+        m_cache.ins(nameDoc, v_tokens);
+      }
+
+      queue_ventana_actual.push_back(nameDoc);
+      for (std::size_t c = 0; c < v_tokens.size(); c++) {
+        topic.add_cementerio(v_tokens[c]);
+      }
+
+      // Lógica de ventana (usa init.doc_count que es el contador global)
+      if (init.doc_count >= init.documentos_ventana) {
+        // cout << "====VENTANA ACTUAL (" << numVentana + 1 << ") CONTIENE "
+        //      << queue_ventana_actual.size()
+        //      << " DOCUMENTOS =========================================" <<
+        //      endl;
+        procesar_ventana();
+        // Nota: Si usas pop_front aquí, el sistema de ventanas funciona como
+        // una ventana deslizante. Si quieres ventanas contiguas, tendrías que
+        // manejar el pop_front de otra manera o resetear queue_ventana_actual.
+        // Asumiendo que quieres una ventana deslizante como en tu código
+        // original:
+        queue_ventana_actual.pop_front();
+        numVentana++;
+      }
+    }
+    if (documentos_procesados_totales >= OBJETIVO_DOCUMENTOS) {
+      break; // Salir del bucle exterior también
+    }
+  }
+
+  // Procesa cualquier ventana restante al final del proceso
+  while (queue_ventana_actual.size() >= init.documentos_ventana) {
+    std::cout << "==== PROCESANDO VENTANA FINAL " << (numVentana + 1)
+              << " ====" << std::endl;
+    procesar_ventana();
+    queue_ventana_actual.pop_front();
+    numVentana++;
+  }
+
+  std::cout << "Procesamiento completado. Total de documentos simulados: "
+            << documentos_procesados_totales << std::endl;
 }
 
 void CInit::print() { topic.printVentanaActual(); }

@@ -24,10 +24,10 @@ public:
   CList();
   ~CList();
 
-  bool Find(Node *&n, int numPoda = 0);
-  bool Search(Data d);
-  void Ins(Data data, int numPoda = 0);
-  bool Rem(Data &data, int numPoda = 0);
+  bool Find(Node *&n);
+  bool Search(Data &d);
+  void Ins(Data &data);
+  bool Rem(Data &data);
   void PrintList() const;
   void limpiar_lista();
 };

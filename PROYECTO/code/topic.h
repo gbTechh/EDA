@@ -1,4 +1,8 @@
+#ifndef TOPIC_H
+#define TOPIC_H
+
 #include "hashmap.h"
+#include "minaux.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -18,10 +22,23 @@ template <class T> struct Fd {
   }
 };
 
+template <class T> struct FdMap {
+  inline unsigned long operator()(const T &x) const {
+    unsigned long hash_value = 0;
+    int i = 1;
+    for (char c : x) {
+      hash_value += static_cast<unsigned long>(c) * i + i;
+      i++;
+    }
+    return hash_value;
+  }
+};
+
 template <unsigned long Sv, unsigned long Sc> class CTopic {
 private:
-  CHashMap<Data, Fd<Data>, Sv> h_ventana;
-  CHashMap<Data, Fd<Data>, Sc> h_cementerio;
+  CHashMap<Data, CList, Fd<Data>, Sv> h_ventana;
+  CHashMap<Data, CList, Fd<Data>, Sc> h_cementerio;
+  CHeap<Data> heap;
 
   int num_doc_ventana;    // numero de documentos por ventana
   int num_ventana_actual; // numero de ventana actual
@@ -61,12 +78,25 @@ CTopic<Sv, Sc>::CTopic(int _k, int _bs, int _tv, int _dv) {
 
 template <unsigned long Sv, unsigned long Sc>
 void CTopic<Sv, Sc>::add_ventana(string token) {
-  Data d = {token, 1, 0};
+  Data d = {token, 1, num_poda_ventana};
   h_ventana.ins(d);
-
+  // cout << "Data: " << d.frq << " - " << d.topic << "\n";
+  if (heap.size() < k) {
+    heap.push(d);
+  } else {
+    Data data = heap.top();
+    if (d.frq >= heap.get_min_frequency()) {
+      heap.pop();
+      heap.push(d);
+    }
+  }
+  // heap.print();
   tokens_ventana++;
   if (tokens_ventana % bucket_size == 0) {
+
     ejecutar_poda();
+    num_poda_ventana++;
+    // h_ventana.PrintTable();
   }
 }
 
@@ -82,15 +112,34 @@ void CTopic<Sv, Sc>::iniciar_nueva_ventana() {
     h_ventana.bucket[i].limpiar_lista();
   }
 
+  while (!heap.empty()) {
+    heap.pop();
+  }
+
   // Reiniciar contadores de ventana
   tokens_ventana = 0;
   num_poda_ventana = 0;
   num_ventana_actual++;
 }
+
 template <unsigned long Sv, unsigned long Sc>
-void CTopic<Sv, Sc>::ejecutar_poda() {}
+void CTopic<Sv, Sc>::ejecutar_poda() {
+  for (int i = 0; i < Sv; i++) {
+    auto &it = h_ventana.bucket[i];
+    Node *current = it.root;
+    while (current != nullptr) {
+      if (current->data.error + current->data.frq <= num_poda_ventana) {
+        Data toRemove{current->data.topic, current->data.frq};
+        it.Rem(toRemove);
+      }
+      current = current->next;
+    }
+  }
+}
 
 template <unsigned long Sv, unsigned long Sc>
 void CTopic<Sv, Sc>::printVentanaActual() {
   h_ventana.PrintTable();
 }
+
+#endif

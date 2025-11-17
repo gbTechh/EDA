@@ -18,7 +18,7 @@ CList::~CList() {
   size = 0;
   total = 0;
 }
-void CList::Ins(Data _data, int numPoda) {
+void CList::Ins(Data &_data) {
   Node *newNode = new Node(_data);
   Node *searchPtr = newNode;
   if (root == nullptr) {
@@ -27,8 +27,9 @@ void CList::Ins(Data _data, int numPoda) {
     total++;
     return;
   }
-  if (Find(searchPtr, numPoda)) {
+  if (Find(searchPtr)) {
     searchPtr->data.frq++;
+    _data = searchPtr->data;
     delete newNode;
   } else {
     newNode->next = root;
@@ -38,7 +39,7 @@ void CList::Ins(Data _data, int numPoda) {
   total++;
 }
 
-bool CList::Find(Node *&n, int numPoda) {
+bool CList::Find(Node *&n) {
   Node *current = root;
 
   while (current != nullptr) {
@@ -50,11 +51,12 @@ bool CList::Find(Node *&n, int numPoda) {
   }
   return false;
 }
-bool CList::Search(Data d) {
+bool CList::Search(Data &d) {
   Node *current = root;
 
   while (current != nullptr) {
     if (current->data.topic == d.topic) {
+      d = current->data;
       return true;
     }
     current = current->next;
@@ -62,7 +64,7 @@ bool CList::Search(Data d) {
   return false;
 }
 
-bool CList::Rem(Data &data, int numPoda) {
+bool CList::Rem(Data &data) {
 
   if (root == nullptr) {
     return false;
@@ -109,7 +111,8 @@ void CList::PrintList() const {
   }
 
   while (current != nullptr) {
-    cout << "[" << current->data.topic << " (frq:" << current->data.frq << ")]";
+    cout << "[" << current->data.topic << " (frq:" << current->data.frq << ")]"
+         << " (err:" << current->data.error << ")]";
     if (current->next != nullptr) {
       cout << " -> ";
     }

@@ -15,7 +15,7 @@ void test_lista_basica() {
 
   // Test 2: Insertar primer elemento
   Data d1{"topic1", 1};
-  lista.Ins(d1, 0);
+  lista.Ins(d1);
   assert(lista.size == 1);
   assert(lista.total == 1);
   assert(lista.root != nullptr);
@@ -25,7 +25,7 @@ void test_lista_basica() {
 
   // Test 3: Insertar segundo elemento
   Data d2{"topic2", 1};
-  lista.Ins(d2, 0);
+  lista.Ins(d2);
   assert(lista.size == 2);
   assert(lista.total == 2);
   assert(lista.root->data.topic == "topic2"); // Se inserta al inicio
@@ -49,9 +49,9 @@ void test_insercion_duplicados() {
 
   // Insertar mismo topic múltiples veces
   Data d1{"topic1", 1};
-  lista.Ins(d1, 0);
-  lista.Ins(d1, 0); // Duplicado
-  lista.Ins(d1, 0); // Duplicado
+  lista.Ins(d1);
+  lista.Ins(d1); // Duplicado
+  lista.Ins(d1); // Duplicado
 
   // El tamaño debe ser 1 (solo un nodo único)
   assert(lista.size == 1);
@@ -62,7 +62,7 @@ void test_insercion_duplicados() {
 
   // Insertar topic diferente
   Data d2{"topic2", 1};
-  lista.Ins(d2, 0);
+  lista.Ins(d2);
   assert(lista.size == 2);
   assert(lista.total == 4);
   std::cout << "✓ Inserción topic diferente funciona" << std::endl;
@@ -77,16 +77,16 @@ void test_eliminacion() {
 
   // Insertar varios elementos (recordar que se insertan al INICIO)
   Data d1{"topic1", 1}, d2{"topic2", 1}, d3{"topic3", 1};
-  lista.Ins(d1, 0); // Lista: topic1
-  lista.Ins(d2, 0); // Lista: topic2 -> topic1
-  lista.Ins(d3, 0); // Lista: topic3 -> topic2 -> topic1
+  lista.Ins(d1); // Lista: topic1
+  lista.Ins(d2); // Lista: topic2 -> topic1
+  lista.Ins(d3); // Lista: topic3 -> topic2 -> topic1
 
   assert(lista.size == 3);
 
   // Test 1: Eliminar elemento del medio (topic2)
   {
     Data toRemove{"topic2", 1};
-    bool removed = lista.Rem(toRemove, 0);
+    bool removed = lista.Rem(toRemove);
     assert(removed == true);
     assert(toRemove.topic == "topic2");
     assert(lista.size == 2);
@@ -97,7 +97,7 @@ void test_eliminacion() {
   // Test 2: Eliminar primer elemento (topic3)
   {
     Data toRemove{"topic3", 1};
-    bool removed = lista.Rem(toRemove, 0);
+    bool removed = lista.Rem(toRemove);
     assert(removed == true);
     assert(toRemove.topic == "topic3");
     assert(lista.size == 1);
@@ -108,7 +108,7 @@ void test_eliminacion() {
   // Test 3: Eliminar último elemento (topic1)
   {
     Data toRemove{"topic1", 1};
-    bool removed = lista.Rem(toRemove, 0);
+    bool removed = lista.Rem(toRemove);
     assert(removed == true);
     assert(toRemove.topic == "topic1");
     assert(lista.size == 0);
@@ -119,7 +119,7 @@ void test_eliminacion() {
   // Test 4: Eliminar de lista vacía
   {
     Data toRemove{"topic99", 1};
-    bool removed = lista.Rem(toRemove, 0);
+    bool removed = lista.Rem(toRemove);
     assert(removed == false);
     std::cout << "✓ Eliminación lista vacía" << std::endl;
   }
@@ -128,11 +128,11 @@ void test_eliminacion() {
   {
     // Primero llenamos la lista
     Data d4{"topic4", 1}, d5{"topic5", 1};
-    lista.Ins(d4, 0); // topic4
-    lista.Ins(d5, 0); // topic5 -> topic4
+    lista.Ins(d4); // topic4
+    lista.Ins(d5); // topic5 -> topic4
 
     Data toRemove{"topic99", 1}; // No existe
-    bool removed = lista.Rem(toRemove, 0);
+    bool removed = lista.Rem(toRemove);
     assert(removed == false);
     assert(lista.size == 2); // Tamaño no cambia
     std::cout << "✓ Eliminación elemento no existente" << std::endl;
@@ -153,13 +153,13 @@ void test_eliminacion_simple() {
 
   // Solo un elemento
   Data d1{"topic1", 1};
-  lista.Ins(d1, 0);
+  lista.Ins(d1);
   debug_lista(lista, "Lista con un elemento");
 
   // Intentar eliminar ese elemento
   Data toRemove{"topic1", 1};
   Data removedData;
-  bool removed = lista.Rem(removedData, 0);
+  bool removed = lista.Rem(removedData);
 
   debug_lista(lista, "Después de eliminar");
   std::cout << "Resultado eliminación: " << removed << std::endl;
@@ -180,7 +180,7 @@ void test_eliminacion_debug() {
 
   // Insertar un elemento
   Data d1{"topic1", 1};
-  lista.Ins(d1, 0);
+  lista.Ins(d1);
   std::cout << "Insertado: topic1" << std::endl;
   debug_lista(lista, "Después de insertar");
 
@@ -188,7 +188,7 @@ void test_eliminacion_debug() {
   Data toRemove{"topic1", 1};
   Data removedData;
   std::cout << "Intentando eliminar: '" << toRemove.topic << "'" << std::endl;
-  bool removed = lista.Rem(toRemove, 0);
+  bool removed = lista.Rem(toRemove);
 
   std::cout << "Resultado Rem: " << removed << std::endl;
   debug_lista(lista, "Después de Rem");
@@ -219,14 +219,14 @@ void test_busqueda_avanzada() {
 
   // Insertar elementos
   Data d1{"topic1", 1}, d2{"topic2", 1}, d3{"topic3", 1};
-  lista.Ins(d1, 0);
-  lista.Ins(d2, 0);
-  lista.Ins(d3, 0);
+  lista.Ins(d1);
+  lista.Ins(d2);
+  lista.Ins(d3);
 
   // Test Find (método interno)
   Node *testNode = new Node(Data{"topic2", 1});
   Node *foundNode = testNode;
-  bool found = lista.Find(foundNode, 0);
+  bool found = lista.Find(foundNode);
 
   assert(found == true);
   assert(foundNode->data.topic == "topic2");
@@ -237,7 +237,7 @@ void test_busqueda_avanzada() {
   // Test Find con elemento no existente
   testNode = new Node(Data{"topic99", 1});
   foundNode = testNode;
-  found = lista.Find(foundNode, 0);
+  found = lista.Find(foundNode);
 
   assert(found == false);
   assert(foundNode == testNode); // No debe cambiar el puntero
@@ -254,10 +254,10 @@ void test_limpieza_lista() {
 
   // Llenar la lista
   Data d1{"topic1", 1}, d2{"topic2", 1}, d3{"topic3", 1};
-  lista.Ins(d1, 0);
-  lista.Ins(d2, 0);
-  lista.Ins(d3, 0);
-  lista.Ins(d1, 0); // Duplicado
+  lista.Ins(d1);
+  lista.Ins(d2);
+  lista.Ins(d3);
+  lista.Ins(d1); // Duplicado
 
   assert(lista.size == 3);
   assert(lista.total == 4);
@@ -272,7 +272,7 @@ void test_limpieza_lista() {
 
   // Verificar que se puede usar después de limpiar
   Data d4{"topic4", 1};
-  lista.Ins(d4, 0);
+  lista.Ins(d4);
   assert(lista.size == 1);
   assert(lista.root->data.topic == "topic4");
   std::cout << "✓ Reutilización después de limpiar" << std::endl;
@@ -288,7 +288,7 @@ void test_estres() {
   // Insertar muchos elementos
   for (int i = 0; i < 100; i++) {
     Data d{"topic" + std::to_string(i), 1};
-    lista.Ins(d, 0);
+    lista.Ins(d);
   }
 
   assert(lista.size == 100);
@@ -298,7 +298,7 @@ void test_estres() {
   // Mezclar inserciones duplicadas
   for (int i = 0; i < 50; i++) {
     Data d{"topic" + std::to_string(i), 1};
-    lista.Ins(d, 0);
+    lista.Ins(d);
   }
 
   assert(lista.size == 100);  // Tamaño no cambia (solo frecuencia)
@@ -309,7 +309,7 @@ void test_estres() {
   Data check{"topic0", 1};
   Node *testNode = new Node(check);
   Node *foundNode = testNode;
-  lista.Find(foundNode, 0);
+  lista.Find(foundNode);
   assert(foundNode->data.frq == 2); // Insertado 2 veces
   delete testNode;
   std::cout << "✓ Frecuencias correctas" << std::endl;
@@ -333,16 +333,16 @@ void test_impresion() {
 
   // Agregar elementos
   Data d1{"topicA", 1}, d2{"topicB", 3}, d3{"topicC", 2};
-  lista.Ins(d1, 0);
-  lista.Ins(d2, 0);
-  lista.Ins(d3, 0);
+  lista.Ins(d1);
+  lista.Ins(d2);
+  lista.Ins(d3);
 
   std::cout << "Lista con elementos: ";
   lista.PrintList();
   std::cout << std::endl;
 
   // Agregar duplicado
-  lista.Ins(d1, 0);
+  lista.Ins(d1);
   std::cout << "Lista con duplicado: ";
   lista.PrintList();
   std::cout << std::endl;

@@ -10,7 +10,7 @@ public:
   bool operator()(const T &a, const T &b) const { return a > b; }
 };
 
-template <class T, class Compare = DESC<T>> class CHeap {
+template <class T, class Compare = ASC<T>> class CHeap {
 private:
   CVector<T> heap;
   Compare comp;
@@ -28,6 +28,7 @@ public:
   T top() const;
   bool pop();
   bool empty() const;
+  void print() const;
 };
 
 // Implementación
@@ -106,4 +107,19 @@ template <class T, class Compare> bool CHeap<T, Compare>::pop() {
   }
 
   return true;
+}
+
+template <class T, class Compare> void CHeap<T, Compare>::print() const {
+  if (heap.size() == 0) {
+    std::cout << "(Heap vacío)" << std::endl;
+    return;
+  }
+  std::cout << "Contenido del Heap (orden de vector): ";
+  for (int i = 0; i < heap.size(); ++i) {
+    std::cout << heap[i];
+    if (i < heap.size() - 1) {
+      std::cout << ", ";
+    }
+  }
+  std::cout << std::endl;
 }

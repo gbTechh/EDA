@@ -1,3 +1,6 @@
+#ifndef CVECTOR_H
+#define CVECTOR_H
+
 #include <iostream>
 #include <stdexcept>
 
@@ -127,3 +130,5 @@ template <class T> void CVector<T>::pop_back() {
     return;
   len--;
 }
+
+#endif
