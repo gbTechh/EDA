@@ -24,8 +24,11 @@ int main() {
 
   cout << "\n⏱️  ====== ESTADÍSTICAS DE TIEMPO ======" << endl;
   cout << "Tiempo total de ejecución: " << duracion.count() << " ms" << endl;
-  cout << "Hash Size Ventana: " << HASH_SIZE_VENTANA << endl;
-  cout << "Hash Size Cementerio: " << HASH_SIZE_CEMENTERIO << endl;
+  cout << "Tiempo total de ejecución: " << (duracion.count() / 1000.0)
+       << " segundos" << endl;
+  cout << "Tiempo total de ejecución: " << (duracion.count() / 60000.0)
+       << " minutos" << endl;
+  app.print();
 
   return 0;
 }
