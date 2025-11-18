@@ -5,17 +5,16 @@
 using namespace std;
 
 // CONSTANTES GLOBALES CONTROLADAS DESDE MAIN
-const unsigned long HASH_SIZE_VENTANA = 10007;
-const unsigned long HASH_SIZE_CEMENTERIO = 30011;
-const int K = 100;
+const unsigned long HASH_SIZE_VENTANA = 30011;
+const unsigned long HASH_SIZE_CEMENTERIO = 99991;
+const int K = 20;
 const int BUCKET_SIZE = 100;
-const int TOKENS_VENTANA = 0;
-const int DOCUMENTOS_VENTANA = 1000;
-const long long OBJETIVO_DOCUMENTOS = 100000;
+const int DOCUMENTOS_VENTANA = 100;
+const long long OBJETIVO_DOCUMENTOS = 1000000;
 int main() {
   auto inicio = chrono::high_resolution_clock::now();
 
-  Init init = {K, BUCKET_SIZE, TOKENS_VENTANA, DOCUMENTOS_VENTANA, 0};
+  Init init = {K, BUCKET_SIZE, DOCUMENTOS_VENTANA, 0};
   CInit<HASH_SIZE_VENTANA, HASH_SIZE_CEMENTERIO> app(init);
   app.runtest(OBJETIVO_DOCUMENTOS);
 

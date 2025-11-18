@@ -11,14 +11,13 @@ using namespace std;
 
 template <class T> struct Fd {
   inline unsigned long operator()(const T &x) const {
-    unsigned long hash_value = 0;
-
-    int i = 1;
+    // FNV-1a - Mucho mejor distribución
+    unsigned long hash = 14695981039346656037UL;
     for (char c : x.topic) {
-      hash_value += static_cast<unsigned long>(c) * i + i;
-      i++;
+      hash ^= static_cast<unsigned long>(c);
+      hash *= 1099511628211UL;
     }
-    return hash_value;
+    return hash;
   }
 };
 
@@ -42,7 +41,7 @@ private:
 
   int num_doc_ventana;    // numero de documentos por ventana
   int num_ventana_actual; // numero de ventana actual
-  int tokens_ventana;     // numero de tokens por ventana
+  int tokens_ventana = 0; // numero de tokens por ventana
   int num_poda_ventana;   // contador de podas para esta ventana
   int k;                  // k treding por vetana
   int bucket_size;        // cada cuanto hacer poda
@@ -64,7 +63,7 @@ private:
   void printDebugStats();
 
 public:
-  CTopic(int k, int bucket_size, int tokens_ventana, int num_doc_ventana);
+  CTopic(int k, int bucket_size, int num_doc_ventana);
   void add_cementerio(string token);
   void add_ventana(string token);
   void rem_freq(CVector<std::string>);
@@ -77,13 +76,13 @@ public:
 //*************************************************** */
 
 template <unsigned long Sv, unsigned long Sc>
-CTopic<Sv, Sc>::CTopic(int _k, int _bs, int _tv, int _dv) {
+CTopic<Sv, Sc>::CTopic(int _k, int _bs, int _dv) {
   k = _k;
   bucket_size = _bs;
   num_poda_ventana = 0;
   num_ventana_actual = 0;
   num_doc_ventana = _dv;
-  tokens_ventana = _tv;
+  tokens_ventana = 0;
 }
 
 template <unsigned long Sv, unsigned long Sc>
@@ -122,15 +121,20 @@ void CTopic<Sv, Sc>::add_cementerio(string token) {
   Data d = {token, 1, 0};
   h_cementerio.ins(d);
 }
+
 template <unsigned long Sv, unsigned long Sc>
 void CTopic<Sv, Sc>::actualizar_heap(string token) {
-  total_heap_updates++;
   Data d = {token, 0, 0};
+
+  // Solo actualizar si vale la pena
   if (h_ventana.search(d) && d.frq >= 2) {
-    if (heap.exists(token)) {
-      heap.update(token, d.frq);
-    } else {
-      if (heap.size() < k || d.frq > heap.get_min_frequency()) {
+    int min_freq = heap.get_min_frequency();
+
+    // Estrategia más inteligente:
+    if (d.frq >= min_freq || heap.size() < k) {
+      if (heap.exists(token)) {
+        heap.update(token, d.frq);
+      } else if (heap.size() < k || d.frq > min_freq) {
         heap.push(d);
       }
     }
@@ -155,15 +159,36 @@ void CTopic<Sv, Sc>::iniciar_nueva_ventana() {
 
 template <unsigned long Sv, unsigned long Sc>
 void CTopic<Sv, Sc>::ejecutar_poda() {
+  int elementos_eliminados = 0;
+
   for (int i = 0; i < Sv; i++) {
     auto &it = h_ventana.bucket[i];
     Node *current = it.root;
+    Node *previous = nullptr;
+
     while (current != nullptr) {
-      if (current->data.error + current->data.frq <= num_poda_ventana) {
-        Data toRemove{current->data.topic, current->data.frq};
-        it.Rem(toRemove);
+      Node *next = current->next;
+
+      // PODAR MÁS AGRESIVAMENTE
+      bool debe_podar = current->data.error + current->data.frq <=
+                            num_poda_ventana ||   // Lossy Counting
+                        current->data.frq <= 1 || // Frecuencia baja
+                        (num_poda_ventana % 5 == 0 &&
+                         current->data.frq <= 2); // Limpieza periódica
+
+      if (debe_podar) {
+        if (previous == nullptr) {
+          it.root = next;
+        } else {
+          previous->next = next;
+        }
+        delete current;
+        elementos_eliminados++;
+        it.size--;
+      } else {
+        previous = current;
       }
-      current = current->next;
+      current = next;
     }
   }
 }
