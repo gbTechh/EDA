@@ -295,6 +295,23 @@ void CInit<HashSizeVentana, HashSizeCementerio>::runtest(
         continue;
       }
 
+      // 8. Lógica de ventana deslizante: si la ventana está llena, se quita el
+      // documento más antiguo
+
+      if (init.doc_count >= init.documentos_ventana) {
+        // std::cout << VERDE;
+        // topic.printVentanaActual();
+        // std::cout << RESET;
+        std::string doc_a_remover = queue_ventana_actual[0];
+        queue_ventana_actual.pop_front();
+        CVector<std::string> tokens_rem = m_cache.find(doc_a_remover);
+        topic.rem_freq(tokens_rem);
+        numVentana++;
+        // std::cout << ROJO << "==== VENTANA DESLIZADA (" << numVentana
+        //           << "). Removido: " << doc_a_remover << " ====" << RESET
+        //           << std::endl;
+      }
+
       CVector<std::string> v_tokens =
           preprocesador.preprocesar_texto(texto_completo);
 
@@ -313,23 +330,6 @@ void CInit<HashSizeVentana, HashSizeCementerio>::runtest(
       //  globales)
       for (std::size_t c = 0; c < v_tokens.size(); c++) {
         topic.add_cementerio(v_tokens[c]);
-      }
-
-      // 8. Lógica de ventana deslizante: si la ventana está llena, se quita el
-      // documento más antiguo
-
-      if (init.doc_count >= init.documentos_ventana) {
-        // std::cout << VERDE;
-        // topic.printVentanaActual();
-        // std::cout << RESET;
-        std::string doc_a_remover = queue_ventana_actual[0];
-        queue_ventana_actual.pop_front();
-        CVector<std::string> tokens_rem = m_cache.find(doc_a_remover);
-        topic.rem_freq(tokens_rem);
-        numVentana++;
-        // std::cout << ROJO << "==== VENTANA DESLIZADA (" << numVentana
-        //           << "). Removido: " << doc_a_remover << " ====" << RESET
-        //           << std::endl;
       }
     }
   }

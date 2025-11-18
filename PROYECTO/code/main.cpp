@@ -5,12 +5,12 @@
 using namespace std;
 
 // CONSTANTES GLOBALES CONTROLADAS DESDE MAIN
-const unsigned long HASH_SIZE_VENTANA = 1001;
-const unsigned long HASH_SIZE_CEMENTERIO = 3000;
+const unsigned long HASH_SIZE_VENTANA = 10007;
+const unsigned long HASH_SIZE_CEMENTERIO = 30011;
 const int K = 100;
-const int BUCKET_SIZE = 1000;
+const int BUCKET_SIZE = 100;
 const int TOKENS_VENTANA = 0;
-const int DOCUMENTOS_VENTANA = 100000;
+const int DOCUMENTOS_VENTANA = 1000;
 const long long OBJETIVO_DOCUMENTOS = 100000;
 int main() {
   auto inicio = chrono::high_resolution_clock::now();

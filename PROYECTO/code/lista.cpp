@@ -66,15 +66,24 @@ bool CList::Search(Data &d) {
 }
 
 bool CList::RemFreq(Data &d) {
+  total_operations++;
   Node *current = root;
   Node *previous = nullptr;
+  int search_steps = 0;
 
   while (current != nullptr) {
+    search_steps++;
+    total_search_steps++;
+
     if (current->data.topic == d.topic) {
       current->data.frq--;
       d.frq = current->data.frq;
       d.topic = current->data.topic;
       d.error = current->data.error;
+      if (search_steps > 20) {
+        std::cout << "ALERTA CList: " << search_steps
+                  << " pasos para: " << d.topic << std::endl;
+      }
       if (current->data.frq == 0) {
         // Reorganizar punteros
         if (previous == nullptr) {
@@ -162,4 +171,13 @@ void CList::limpiar_lista() {
   root = nullptr;
   size = 0;
   total = 0;
+}
+
+void CList::printDebugStats() {
+  std::cout << "CList Stats - Operaciones: " << total_operations
+            << ", Avg steps: "
+            << (total_operations > 0
+                    ? (double)total_search_steps / total_operations
+                    : 0)
+            << ", Size: " << size << std::endl;
 }

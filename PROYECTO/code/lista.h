@@ -14,6 +14,10 @@ public:
 };
 
 class CList {
+private:
+  // Contador de debug
+  long long total_search_steps = 0;
+  long long total_operations = 0;
 
 public:
   int size;  // total de nodos
@@ -31,4 +35,5 @@ public:
   bool RemFreq(Data &data);
   void PrintList() const;
   void limpiar_lista();
+  void printDebugStats();
 };
