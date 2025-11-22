@@ -213,42 +213,10 @@ void CInit<HashSizeVentana, HashSizeCementerio>::runtest(
       leer_documentos_de_carpeta(carpeta_docs);
 
   if (archivos_reales.empty()) {
-    // Lógica para crear archivos de ejemplo si no existen (sin cambios)
-    std::cout << "No se encontraron archivos en la carpeta 'docs'. Creando "
-                 "archivos de ejemplo..."
+    std::cout << "No se encontraron archivos en la carpeta 'docs'."
               << std::endl;
-    fs::create_directory("docs");
-    std::vector<std::string> documentos_ejemplo = {
-        "Rollins Goes 0-for-4 as Streak Ends PHILADELPHIA -- Jimmy Rollins was "
-        "heading back to the clubhouse when Charlie Manuel put his arm around "
-        "him and offered some encouraging words.",
-        "Mets Beat Phillies 5-2 Behind Strong Pitching NEW YORK -- The New "
-        "York Mets defeated the Philadelphia Phillies 5-2 on Saturday night.",
-        "Yankees Win World Series in Game 7 Thriller NEW YORK -- The New York "
-        "Yankees won their 27th World Series championship with a dramatic Game "
-        "7 victory.",
-        "Phillies Sign Free Agent Pitcher to 3-Year Deal PHILADELPHIA -- The "
-        "Phillies have signed right-handed pitcher to a three-year contract "
-        "worth $30 million.",
-        "Eagles Prepare for Cowboys in NFC East Showdown PHILADELPHIA -- The "
-        "Philadelphia Eagles are getting ready to face the Dallas Cowboys in a "
-        "crucial division game."};
-
-    for (size_t i = 0; i < documentos_ejemplo.size(); i++) {
-      std::string nombre_archivo =
-          "docs/documento_" + std::to_string(i + 1) + ".txt";
-      std::ofstream file(nombre_archivo);
-      if (file.is_open()) {
-        file << documentos_ejemplo[i];
-        file.close();
-        archivos_reales.push_back(nombre_archivo);
-        std::cout << "Creado archivo de ejemplo: " << nombre_archivo
-                  << std::endl;
-      }
-    }
+    return;
   }
-
-  // --- Lógica principal para procesar 1 millón de documentos ---
 
   size_t num_archivos_reales = archivos_reales.size();
 
@@ -261,40 +229,23 @@ void CInit<HashSizeVentana, HashSizeCementerio>::runtest(
             << " documentos (reutilizando " << num_archivos_reales
             << " archivos reales)." << std::endl;
 
-  // Usamos un bucle while que se ejecuta hasta alcanzar 1 millón de documentos.
   while (init.doc_count < OBJETIVO_DOCUMENTOS) {
 
-    // Iteramos sobre cada archivo real disponible
     for (size_t i = 0; i < num_archivos_reales; ++i) {
 
-      // Si ya alcanzamos el millón dentro del bucle interno, salimos
       if (init.doc_count >= OBJETIVO_DOCUMENTOS) {
         break;
       }
 
-      // 1. Incrementar el contador global del documento simulado
       init.doc_count++;
 
-      // 2. Identificar el archivo real actual (ciclicamente)
       std::string ruta_archivo_actual = archivos_reales[i];
-
-      // 3. Generar un nombre de documento único para la caché (ej: "doc_1",
-      // "doc_1000000")
       std::string nameDocCache = "doc_" + std::to_string(init.doc_count);
-
-      // std::cout << "\n=== PROCESANDO DOCUMENTO SIMULADO " << init.doc_count
-      // << " (Archivo real: " << ruta_archivo_actual << ") ===" << std::endl;
-
-      // 4. Leer y preprocesar el archivo real (desde disco o caché si tuvieras
-      // esa lógica)
       std::string texto_completo = leer_archivo(ruta_archivo_actual);
 
       if (texto_completo.empty()) {
         continue;
       }
-
-      // 8. Lógica de ventana deslizante: si la ventana está llena, se quita el
-      // documento más antiguo
 
       if (init.doc_count >= init.documentos_ventana) {
         // std::cout << VERDE;
