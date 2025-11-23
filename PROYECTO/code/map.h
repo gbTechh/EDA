@@ -32,7 +32,7 @@ void CMap<K, V, Fd, Sz>::ins(K k, V v) {
 }
 
 template <class K, class V, class Fd, unsigned long Sz>
-bool CMap<K, V, Fd, Sz>::findk(K k) {
+bool CMap<K, V, Fd, Sz>::findk(K k) { // devuelve solo true o false
   unsigned long bucket_index = fd(k) % Sz;
   auto &list_ref = bucket[bucket_index];
 
@@ -41,7 +41,7 @@ bool CMap<K, V, Fd, Sz>::findk(K k) {
 }
 
 template <class K, class V, class Fd, unsigned long Sz>
-V CMap<K, V, Fd, Sz>::find(K k) {
+V CMap<K, V, Fd, Sz>::find(K k) { // devuelve value del key
   unsigned long bucket_index = fd(k) % Sz;
   auto &list_ref = bucket[bucket_index];
 

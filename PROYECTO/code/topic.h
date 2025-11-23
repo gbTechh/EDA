@@ -2,7 +2,8 @@
 #define TOPIC_H
 
 #include "hashmap.h"
-#include "minaux.h"
+#include "map.h"
+#include "minheapindice.h"
 #include "vector.h"
 #include <iostream>
 #include <string>
@@ -33,11 +34,17 @@ template <class T> struct FdMap {
   }
 };
 
+struct DataIndices {
+  std::string topic;
+  int index;
+};
+// sv = size ventana
+// sc = size cementerio
 template <unsigned long Sv, unsigned long Sc> class CTopic {
 private:
   CHashMap<Data, CList, Fd<Data>, Sv> h_ventana;
   CHashMap<Data, CList, Fd<Data>, Sc> h_cementerio;
-  CHeap<Data> heap;
+  CMinHeapInd<Data> heap;
 
   int num_doc_ventana;    // numero de documentos por ventana
   int num_ventana_actual; // numero de ventana actual
@@ -55,19 +62,18 @@ private:
   long long total_podas_ejecutadas = 0;
 
 private:
-  void ejecutar_poda();             // Ejecuta poda en ventana actual
-  bool debe_ser_podado(Node *nodo); // Decide si un nodo debe podarse
-  int obtener_frecuencia_historica(string palabra); // Consulta histórica
-  void limpiar_ventana_actual();
-  void actualizar_heap(std::string token);
+  void ejecutar_poda(); // Ejecuta poda en ventana actual
+  void rellenar_heap();
+  void verificar_heap_despues_reduccion();
   void printDebugStats();
 
 public:
   CTopic(int k, int bucket_size, int num_doc_ventana);
   void add_cementerio(string token);
   void add_ventana(string token);
-  void rem_freq(CVector<std::string>);
+  void rem_freq(CVector<std::string> v_tokens);
   void iniciar_nueva_ventana();
+  CVector<std::string> get_k_topics();
   void printVentanaActual();
 };
 
@@ -89,30 +95,34 @@ template <unsigned long Sv, unsigned long Sc>
 void CTopic<Sv, Sc>::add_ventana(string token) {
   total_add_ventana_calls++;
   Data d = {token, 1, num_poda_ventana};
+  h_ventana.ins(d); // d teien al frecuencia actualizada:
   ++tokens_ventana;
-  h_ventana.ins(d);
-  // cout << "Data: " << d.frq << " - " << d.topic << "\n";
-  if (heap.size() < k) {
-    heap.push(d);
-  } else {
-    Data data = heap.top();
-    if (d.frq >= heap.get_min_frequency()) {
-      heap.pop();
+
+  if (heap.exists(token)) { // actualizar frecuencia
+    heap.update(token, d.frq);
+    total_heap_updates++;
+
+  } else { // token no en en lheap
+    if (heap.size() < k) {
+      // Hay espacio, insertar directamente
       heap.push(d);
+
+    } else {
+      // Heap lleno, comparar con mínimo
+      int min_freq = heap.get_min_frequency();
+
+      if (d.frq > min_freq) {
+        heap.pop();
+        heap.push(d);
+        total_heap_updates++;
+      }
     }
   }
-  // heap.print();
 
   if (tokens_ventana % bucket_size == 0) {
-
     ejecutar_poda();
     num_poda_ventana++;
     total_podas_ejecutadas++;
-    // cout << "NUM PODA: " << num_poda_ventana << endl;
-    //  h_ventana.PrintTable();
-  }
-  if (total_add_ventana_calls % 1000 == 0) {
-    // printDebugStats();
   }
 }
 
@@ -123,91 +133,164 @@ void CTopic<Sv, Sc>::add_cementerio(string token) {
 }
 
 template <unsigned long Sv, unsigned long Sc>
-void CTopic<Sv, Sc>::actualizar_heap(string token) {
-  Data d = {token, 0, 0};
+void CTopic<Sv, Sc>::rem_freq(CVector<std::string> v_tokens) {
+  total_remFreq_calls++;
+  total_remFreq_tokens_processed += v_tokens.size();
 
-  // Solo actualizar si vale la pena
-  if (h_ventana.search(d) && d.frq >= 2) {
-    int min_freq = heap.get_min_frequency();
+  for (std::size_t i = 0; i < v_tokens.size(); i++) {
+    Data d = {v_tokens[i], 0, 0};
 
-    // Estrategia más inteligente:
-    if (d.frq >= min_freq || heap.size() < k) {
-      if (heap.exists(token)) {
-        heap.update(token, d.frq);
-      } else if (heap.size() < k || d.frq > min_freq) {
-        heap.push(d);
+    if (h_ventana.remFreq(d)) {
+      if (heap.exists(v_tokens[i])) {
+        if (d.frq > 0) {
+          heap.update(v_tokens[i], d.frq);
+          heap.remove(v_tokens[i]);
+        }
       }
     }
   }
+  verificar_heap_despues_reduccion();
 }
 
+// Verificar si hay palabras fuera del heap con mayor frecuencia
 template <unsigned long Sv, unsigned long Sc>
-void CTopic<Sv, Sc>::iniciar_nueva_ventana() {
-  for (int i = 0; i < Sv; i++) {
-    h_ventana.bucket[i].limpiar_lista();
+void CTopic<Sv, Sc>::verificar_heap_despues_reduccion() {
+  if (heap.size() < k) {
+    rellenar_heap();
+    return;
   }
 
-  while (!heap.empty()) {
+  // Si está lleno, buscar candidatos mejores
+  int min_freq = heap.get_min_frequency();
+  Data mejor_candidato = {"", 0, 0};
+  bool hay_candidato = false;
+
+  // Buscar en HashMap palabras NO en heap con freq > min
+  for (unsigned long i = 0; i < Sv; i++) {
+    Node *current = h_ventana.bucket[i].root;
+
+    while (current != nullptr) {
+      string palabra = current->data.topic;
+      int freq = current->data.frq;
+
+      if (!heap.exists(palabra) && freq > min_freq) {
+        if (!hay_candidato || freq > mejor_candidato.frq) {
+          mejor_candidato = current->data;
+          hay_candidato = true;
+        }
+      }
+      current = current->next;
+    }
+  }
+
+  // Si encontramos un mejor candidato, reemplazar
+  if (hay_candidato) {
     heap.pop();
+    heap.push(mejor_candidato);
+  }
+}
+
+// Rellenar heap cuando tiene < k elementos
+template <unsigned long Sv, unsigned long Sc>
+void CTopic<Sv, Sc>::rellenar_heap() {
+  int espacios_libres = k - heap.size();
+
+  if (espacios_libres <= 0)
+    return;
+
+  // Recolectar candidatos (palabras NO en heap)
+  CVector<Data> candidatos;
+
+  for (unsigned long i = 0; i < Sv; i++) {
+    Node *current = h_ventana.bucket[i].root;
+
+    while (current != nullptr) {
+      if (!heap.exists(current->data.topic)) {
+        candidatos.push_back(current->data);
+      }
+      current = current->next;
+    }
   }
 
-  // Reiniciar contadores de ventana
-  tokens_ventana = 0;
-  num_poda_ventana = 0;
-  num_ventana_actual++;
+  for (std::size_t i = 0; i < candidatos.size() && i < espacios_libres; i++) {
+    int max_idx = i;
+    for (int j = i + 1; j < candidatos.size(); j++) {
+      if (candidatos[j].frq > candidatos[max_idx].frq) {
+        max_idx = j;
+      }
+    }
+
+    // Swap
+    Data temp = candidatos[i];
+    candidatos[i] = candidatos[max_idx];
+    candidatos[max_idx] = temp;
+
+    // Agregar al heap
+    heap.push(candidatos[i]);
+  }
 }
 
 template <unsigned long Sv, unsigned long Sc>
 void CTopic<Sv, Sc>::ejecutar_poda() {
   int elementos_eliminados = 0;
+  CVector<string> palabras_eliminadas;
 
-  for (int i = 0; i < Sv; i++) {
-    auto &it = h_ventana.bucket[i];
-    Node *current = it.root;
+  for (unsigned long i = 0; i < Sv; i++) {
+    CList &lista = h_ventana.bucket[i];
+    Node *current = lista.root;
     Node *previous = nullptr;
 
     while (current != nullptr) {
       Node *next = current->next;
 
-      // PODAR MÁS AGRESIVAMENTE
-      bool debe_podar = current->data.error + current->data.frq <=
-                            num_poda_ventana ||   // Lossy Counting
-                        current->data.frq <= 1 || // Frecuencia baja
-                        (num_poda_ventana % 5 == 0 &&
-                         current->data.frq <= 2); // Limpieza periódica
+      bool debe_podar =
+          (current->data.frq + current->data.error) <= num_poda_ventana;
 
       if (debe_podar) {
+        palabras_eliminadas.push_back(current->data.topic);
+
         if (previous == nullptr) {
-          it.root = next;
+          lista.root = next;
         } else {
           previous->next = next;
         }
         delete current;
         elementos_eliminados++;
-        it.size--;
+        lista.size--;
       } else {
         previous = current;
       }
       current = next;
     }
   }
-}
-template <unsigned long Sv, unsigned long Sc>
-void CTopic<Sv, Sc>::rem_freq(CVector<std::string> v_tokens) {
-  total_remFreq_calls++;
-  total_remFreq_tokens_processed += v_tokens.size();
-  for (int i = 0; i < v_tokens.size(); i++) {
-    Data d = {v_tokens[i], 0, 0};
 
-    if (h_ventana.remFreq(d)) {
-      if (d.frq > 0) {
-        actualizar_heap(v_tokens[i]);
-      } else {
-        if (heap.exists(v_tokens[i])) {
-        }
-      }
+  // eliminar paplbras pdodass del heap
+  for (std::size_t i = 0; i < palabras_eliminadas.size(); i++) {
+    if (heap.exists(palabras_eliminadas[i])) {
+      heap.remove(palabras_eliminadas[i]);
     }
   }
+
+  if (heap.size() < k) {
+    rellenar_heap();
+  }
+}
+
+template <unsigned long Sv, unsigned long Sc>
+CVector<std::string> CTopic<Sv, Sc>::get_k_topics() {
+  CVector<std::string> v_topics;
+  CMinHeapInd<Data> heap;
+  int it = heap.size() - k;
+  for (int i = 0; i < it; i++) {
+    heap.pop();
+  }
+  Data d;
+  for (int i = 0; i < k; i++) {
+    d = heap.top();
+    heap.pop();
+    v_topics.push_back(d.topic);
+  }
+  return v_topics;
 }
 
 template <unsigned long Sv, unsigned long Sc>

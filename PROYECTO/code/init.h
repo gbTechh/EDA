@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <queue>
 #include <string>
 #include <vector>
 
@@ -46,7 +47,7 @@ class CInit {
 private:
   CTopic<HashSizeVentana, HashSizeCementerio> topic;
   CMap<std::string, CVector<std::string>, Fd_String<std::string>, 13> m_cache;
-  CVector<std::string> queue_ventana_actual;
+  queue<std::string> queue_ventana_actual;
   PreprocesadorCPP preprocesador;
   int total_docs = 0;
   Init init;
@@ -64,6 +65,7 @@ public:
   void runtest(long long OBJETIVO_DOCUMENTOS);
   void runtestvector(const CVector<CVector<std::string>> &documentos_test);
   void print();
+  void runtestvector2(const CVector<CVector<std::string>> &documentos_test);
 };
 
 #endif
@@ -182,8 +184,8 @@ void CInit<HashSizeVentana, HashSizeCementerio>::run() {
     }
 
     if (init.doc_count >= init.documentos_ventana) {
-      std::string doc = queue_ventana_actual[0];
-      queue_ventana_actual.pop_front();
+      std::string doc = queue_ventana_actual.front();
+      queue_ventana_actual.pop();
       CVector<std::string> tokens_rem = m_cache.find(doc);
       topic.rem_freq(tokens_rem);
       numVentana++;
@@ -194,9 +196,9 @@ void CInit<HashSizeVentana, HashSizeCementerio>::run() {
 
     std::string nameDoc = "doc_" + to_string(init.doc_count);
     m_cache.ins(nameDoc, v_tokens);
-    queue_ventana_actual.push_back(nameDoc);
+    queue_ventana_actual.push(nameDoc);
 
-    for (int i = 0; i < v_tokens.size(); i++) {
+    for (std::size_t i = 0; i < v_tokens.size(); i++) {
       topic.add_ventana(v_tokens[i]);
     }
     for (std::size_t c = 0; c < v_tokens.size(); c++) {
@@ -251,8 +253,8 @@ void CInit<HashSizeVentana, HashSizeCementerio>::runtest(
         // std::cout << VERDE;
         // topic.printVentanaActual();
         // std::cout << RESET;
-        std::string doc_a_remover = queue_ventana_actual[0];
-        queue_ventana_actual.pop_front();
+        std::string doc_a_remover = queue_ventana_actual.front();
+        queue_ventana_actual.pop();
         CVector<std::string> tokens_rem = m_cache.find(doc_a_remover);
         topic.rem_freq(tokens_rem);
         numVentana++;
@@ -266,7 +268,7 @@ void CInit<HashSizeVentana, HashSizeCementerio>::runtest(
 
       // 5. Insertar en caché con el nombre *único* del documento simulado
       m_cache.ins(nameDocCache, v_tokens);
-      queue_ventana_actual.push_back(nameDocCache);
+      queue_ventana_actual.push(nameDocCache);
 
       // 6. Añadir tokens a la ventana actual del topic model
       // cout << "Tokens:[";
@@ -321,7 +323,7 @@ void CInit<HashSizeVentana, HashSizeCementerio>::runtestvector(
     // Usar nombre de documento único para la caché
     std::string nameDoc = "test_doc_" + std::to_string(init.doc_count);
     m_cache.ins(nameDoc, v_tokens);
-    queue_ventana_actual.push_back(nameDoc);
+    queue_ventana_actual.push(nameDoc);
 
     // Procesar tokens en el topic model
     for (int t = 0; t < v_tokens.size(); t++) {
@@ -335,8 +337,8 @@ void CInit<HashSizeVentana, HashSizeCementerio>::runtestvector(
 
     // Lógica de ventana deslizante
     if (init.doc_count >= init.documentos_ventana) {
-      std::string doc_a_remover = queue_ventana_actual[0];
-      queue_ventana_actual.pop_front();
+      std::string doc_a_remover = queue_ventana_actual.front();
+      queue_ventana_actual.pop();
       CVector<std::string> tokens_rem = m_cache.find(doc_a_remover);
 
       std::cout << "🔄 VENTANA DESLIZADA - Removiendo: " << doc_a_remover
@@ -361,6 +363,100 @@ void CInit<HashSizeVentana, HashSizeCementerio>::runtestvector(
   std::cout << "RESULTADO FINAL - Top " << init.k
             << " trending topics:" << std::endl;
   topic.printVentanaActual();
+}
+
+template <unsigned long HashSizeVentana, unsigned long HashSizeCementerio>
+void CInit<HashSizeVentana, HashSizeCementerio>::runtestvector2(
+    const CVector<CVector<std::string>> &documentos_test) {
+
+  std::cout << "🧪 INICIANDO TEST CON VECTOR PREDEFINIDO" << std::endl;
+  std::cout << "Documentos a procesar: " << documentos_test.size() << std::endl;
+  std::cout << "Tamaño de ventana: " << init.documentos_ventana << std::endl;
+
+  // Reiniciar contadores para test limpio
+  init.doc_count = 0;
+  numVentana = 0;
+  // Limpiar estructuras
+  while (!queue_ventana_actual.empty())
+    queue_ventana_actual.pop();
+  m_cache =
+      CMap<std::string, CVector<std::string>, Fd_String<std::string>, 13>();
+
+  std::cout << "\n=== CONFIGURACIÓN INICIAL ===" << std::endl;
+  std::cout << "K (topics): " << init.k << std::endl;
+  std::cout << "Bucket size: " << init.bucket_size << std::endl;
+
+  // Procesar cada documento del vector de test
+  for (int doc_idx = 0; doc_idx < documentos_test.size(); doc_idx++) {
+    init.doc_count++;
+
+    std::cout << "\n=== PROCESANDO DOCUMENTO TEST " << init.doc_count
+              << " ===" << std::endl;
+
+    const CVector<std::string> &v_tokens = documentos_test[doc_idx];
+
+    std::cout << "Tokens: [";
+    for (int t = 0; t < v_tokens.size(); t++) {
+      std::cout << v_tokens[t];
+      if (t < v_tokens.size() - 1)
+        std::cout << ", ";
+    }
+    std::cout << "]" << std::endl;
+
+    // Usar nombre de documento único para la caché
+    std::string nameDoc = "test_doc_" + std::to_string(init.doc_count);
+    m_cache.ins(nameDoc, v_tokens);
+    queue_ventana_actual.push(nameDoc);
+
+    // Procesar tokens en el topic model
+    for (int t = 0; t < v_tokens.size(); t++) {
+      topic.add_ventana(v_tokens[t]);
+    }
+
+    // Añadir al cementerio
+    for (std::size_t c = 0; c < v_tokens.size(); c++) {
+      topic.add_cementerio(v_tokens[c]);
+    }
+
+    // Lógica de ventana deslizante
+    if (init.doc_count >= init.documentos_ventana) {
+      std::string doc_a_remover = queue_ventana_actual.front();
+      queue_ventana_actual.pop();
+      CVector<std::string> tokens_rem = m_cache.find(doc_a_remover);
+
+      std::cout << "🔄 VENTANA DESLIZADA - Removiendo: " << doc_a_remover
+                << " con " << tokens_rem.size() << " tokens" << std::endl;
+
+      std::cout << "Tokens a remover: [";
+      for (int t = 0; t < tokens_rem.size(); t++) {
+        std::cout << tokens_rem[t];
+        if (t < tokens_rem.size() - 1)
+          std::cout << ", ";
+      }
+      std::cout << "]" << std::endl;
+
+      topic.rem_freq(tokens_rem);
+      numVentana++;
+
+      // Mostrar estado después de rem_freq
+      std::cout << "Estado después de rem_freq: ";
+      topic.printVentanaActual();
+    }
+
+    // Mostrar estado actual del heap
+    std::cout << "Heap actual (doc " << init.doc_count << "): ";
+    topic.printVentanaActual();
+  }
+
+  std::cout << "\n🎉 TEST CON VECTOR COMPLETADO" << std::endl;
+  std::cout << "Total documentos procesados: " << init.doc_count << std::endl;
+  std::cout << "Total ventanas deslizadas: " << numVentana << std::endl;
+  std::cout << "RESULTADO FINAL - Top " << init.k
+            << " trending topics:" << std::endl;
+  topic.printVentanaActual();
+
+  // Mostrar estadísticas de debug del topic
+  // topic.printDebugStats(); // Descomenta si tienes esta función
 }
 
 template <unsigned long HashSizeVentana, unsigned long HashSizeCementerio>

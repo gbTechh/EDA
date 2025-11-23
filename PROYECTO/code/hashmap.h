@@ -27,14 +27,6 @@ public:
 //                  IMPLEMENTACION                     /
 //*************************************************** */
 
-// template <class T, class Fd, unsigned long Sz>
-//  CHashMap<T, Fd, Sz>::CHashMap() {}
-
-// template <class T, class Fd, unsigned long Sz>
-// CHashMap<T, Fd, Sz>::~CHashMap() {
-//   delete[] bucket;
-// }
-
 template <class T, class S, class Fd, unsigned long Sz>
 void CHashMap<T, S, Fd, Sz>::ins(T &v) {
   bucket[fd(v) % Sz].Ins(v);

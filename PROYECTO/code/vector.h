@@ -22,7 +22,7 @@ public:
   std::size_t size() const { return len; }
   T &operator[](std::size_t ind);
   const T &operator[](std::size_t ind) const;
-
+  bool empty() const { return len == 0; }
   void push_front(T v);
   void push_back(T v);
   void pop_front();
