@@ -7,13 +7,12 @@ TEST_VECTOR = test_vector
 TEST_LISTA = test_lista  
 TEST_LISTAMAP = test_lista_map  
 TEST_MAP = test_map  
-TEST_HEAP = test_heap
 TEST_HASHMAP = test_hashmap
 TEST_TOPIC = test_topic
 TEST_INIT = test_init
 
 # Compilar todos los tests
-all: $(TEST_VECTOR) $(TEST_LISTA) $(TEST_LISTAMAP) $(TEST_MAP) $(TEST_HEAP) $(TEST_HASHMAP) $(TEST_TOPIC) $(TEST_INIT)
+all: $(TEST_VECTOR) $(TEST_LISTA) $(TEST_LISTAMAP) $(TEST_MAP) $(TEST_HASHMAP) $(TEST_TOPIC) $(TEST_INIT)
 	@echo "✅ Todos los tests compilados"
 
 # Cada test se compila incluyendo TODAS las dependencias necesarias
@@ -32,10 +31,6 @@ $(TEST_LISTAMAP): listamap.cpp ../listamap.h ../data.h ../vector.h
 $(TEST_MAP): map.cpp ../map.h ../data.h ../vector.h
 	@echo "🔨 Compilando test_map..."
 	$(CXX) $(CXXFLAGS) -o $@ map.cpp
-
-$(TEST_HEAP): heap.cpp ../vector.h ../minaux.h
-	@echo "🔨 Compilando test_heap..."
-	$(CXX) $(CXXFLAGS) -o $@ heap.cpp
 
 $(TEST_HASHMAP): hashmap.cpp ../hashmap.h ../lista.h ../data.h ../vector.h ../lista.cpp
 	@echo "🔨 Compilando test_hashmap..."
@@ -65,9 +60,6 @@ test: all
 	@echo "4. Test de Map:"
 	@./$(TEST_MAP) && echo "✅ test_map pasó" || echo "❌ test_map falló"
 	@echo "=================================="
-	@echo "5. Test de Heap:"
-	@./$(TEST_HEAP) && echo "✅ test_heap pasó" || echo "❌ test_heap falló"
-	@echo "=================================="
 	@echo "6. Test de HashMap:"
 	@./$(TEST_HASHMAP) && echo "✅ test_hashmap pasó" || echo "❌ test_hashmap falló"
 	@echo "=================================="
@@ -92,9 +84,6 @@ run-listamap: $(TEST_LISTAMAP)
 run-map: $(TEST_MAP)
 	@./$(TEST_MAP)
 
-run-heap: $(TEST_HEAP)
-	@./$(TEST_HEAP)
-
 run-hashmap: $(TEST_HASHMAP)
 	@./$(TEST_HASHMAP)
 
@@ -107,7 +96,7 @@ run-init: $(TEST_INIT)
 # Limpiar
 clean:
 	@echo "🧹 Limpiando ejecutables..."
-	@rm -f $(TEST_VECTOR) $(TEST_LISTA) $(TEST_LISTAMAP) $(TEST_MAP) $(TEST_HEAP) $(TEST_HASHMAP) $(TEST_TOPIC) $(TEST_INIT)
+	@rm -f $(TEST_VECTOR) $(TEST_LISTA) $(TEST_LISTAMAP) $(TEST_MAP) $(TEST_HASHMAP) $(TEST_TOPIC) $(TEST_INIT)
 
 # Ayuda
 help:

@@ -1,10 +1,10 @@
 {
-  "timestamp": 10800,
+  "timestamp": 266,
   "ventana": 0,
-  "export_num": 263,
+  "export_num": 18,
   "topics": [
-    {"word": "thursday", "frequency": 5},
-    {"word": "gaza", "frequency": 4},
-    {"word": "republican", "frequency": 4}
+    {"word": "after", "frequency": 7},
+    {"word": "planet", "frequency": 5},
+    {"word": "wil", "frequency": 5}
   ]
 }

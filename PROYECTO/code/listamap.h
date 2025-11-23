@@ -2,7 +2,6 @@
 #define LISTAMAP_H
 
 #include "data.h"
-#include <cstddef>
 #include <iostream>
 
 template <class K, class V> class NodeListMap {

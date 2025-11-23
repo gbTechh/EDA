@@ -182,7 +182,7 @@ void CTopic<Sv, Sc>::rem_freq(CVector<std::string> v_tokens) {
 // Verificar si hay palabras fuera del heap con mayor frecuencia
 template <unsigned long Sv, unsigned long Sc>
 void CTopic<Sv, Sc>::verificar_heap_despues_reduccion() {
-  if (heap.size() < k) {
+  if (heap.size() < static_cast<std::size_t>(k)) {
     rellenar_heap();
     return;
   }

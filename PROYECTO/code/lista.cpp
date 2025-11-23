@@ -81,8 +81,8 @@ bool CList::RemFreq(Data &d) {
       d.topic = current->data.topic;
       d.error = current->data.error;
       if (search_steps > 20) {
-        std::cout << "ALERTA CList: " << search_steps
-                  << " pasos para: " << d.topic << std::endl;
+        std::cout << "CList: " << search_steps << " pasos para: " << d.topic
+                  << std::endl;
       }
       if (current->data.frq == 0) {
         // Reorganizar punteros
