@@ -4,12 +4,16 @@
 #include "vector.h"
 #include <algorithm>
 #include <cctype>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 
 class PreprocesadorCPP {
 private:
+  // ============= STOPWORDS =============
   std::unordered_set<std::string> stopwords = {
       // Artículos
       "the", "a", "an",
@@ -32,196 +36,130 @@ private:
       // Adverbios comunes
       "very", "really", "quite", "too", "so", "just", "only", "now", "then",
       "here", "there", "when", "where", "why", "how",
-      // Palabras deportivas comunes
-      "game", "team", "player", "season", "league", "point", "play", "win",
-      "loss", "match", "score", "goal", "field", "court",
       // Otros comunes
       "all", "any", "both", "each", "few", "more", "most", "other", "some",
       "such", "no", "what", "say", "not", "only", "own", "same", "than", "too"};
 
-  std::unordered_map<std::string, std::string> lematizador = {
-      // Sustantivos plurales
-      {"players", "player"},
-      {"teams", "team"},
-      {"games", "game"},
-      {"seasons", "season"},
-      {"leagues", "league"},
-      {"points", "point"},
-      {"matches", "match"},
-      {"scores", "score"},
-      {"goals", "goal"},
-      {"fields", "field"},
-      {"courts", "court"},
-      {"countries", "country"},
-      {"cities", "city"},
-      {"states", "state"},
-      {"years", "year"},
-      {"months", "month"},
-      {"days", "day"},
-      {"times", "time"},
-      {"ways", "way"},
-      {"men", "man"},
-      {"women", "woman"},
-      {"children", "child"},
-      {"people", "person"},
+  // ============= DICCIONARIO DE LEMAS =============
+  std::unordered_map<std::string, std::string> lematizador;
 
-      // Verbos comunes (mantengo solo los más esenciales para el ejemplo)
-      {"playing", "play"},
-      {"played", "play"},
-      {"plays", "play"},
-      {"winning", "win"},
-      {"won", "win"},
-      {"wins", "win"},
-      {"losing", "lose"},
-      {"lost", "lose"},
-      {"loses", "lose"},
-      {"scoring", "score"},
-      {"scored", "score"},
-      {"going", "go"},
-      {"went", "go"},
-      {"goes", "go"},
-      {"getting", "get"},
-      {"got", "get"},
-      {"gets", "get"},
-      {"making", "make"},
-      {"made", "make"},
-      {"makes", "make"},
-      {"taking", "take"},
-      {"took", "take"},
-      {"takes", "take"}};
+  // (Opcional) Guardar palabras desconocidas
+  std::unordered_set<std::string> palabras_desconocidas;
 
-  // Función auxiliar para reemplazar ends_with
+  //============= CARGAR DICCIONARIO EXTERNO ============
+public:
+  void cargar_diccionario(const std::string &ruta) {
+    std::ifstream file(ruta);
+    if (!file.is_open()) {
+      std::cerr << "Error leyendo: " << ruta << "\n";
+      return;
+    }
+
+    std::string linea, palabra, lema;
+    while (std::getline(file, linea)) {
+      std::istringstream ss(linea);
+      if (ss >> palabra >> lema) {
+        lematizador[palabra] = lema;
+      }
+    }
+  }
+
+private:
+  //============= UTILIDADES ============
   bool termina_con(const std::string &str, const std::string &suffix) {
-    if (str.length() < suffix.length())
+    if (str.size() < suffix.size())
       return false;
-    return str.compare(str.length() - suffix.length(), suffix.length(),
-                       suffix) == 0;
+    return str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
   }
 
-  std::string limpiar_caracteres_extraños(const std::string &texto) {
-    std::string resultado;
-    for (char c : texto) {
-      // Mantener letras, números, apostrofes y guiones
-      if (std::isalnum(c) || c == '-') {
-        resultado += c;
-      } else {
-        // Reemplazar otros caracteres por espacio
-        resultado += ' ';
+  bool es_consonante(char c) {
+    c = std::tolower(c);
+    return (c >= 'a' && c <= 'z') &&
+           !(c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u');
+  }
+
+  std::string limpiar_caracteres(const std::string &texto) {
+    std::string r;
+    for (char c : texto)
+      r += (std::isalnum(c) || c == '-') ? c : ' ';
+    return r;
+  }
+
+  std::string a_minusculas(std::string s) {
+    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+    return s;
+  }
+
+  //============== STEMMING SIMPLE =================
+  std::string stemming_simple(std::string w) {
+    const CVector<std::string> sufijos = {"ing", "ed", "es", "s"};
+
+    for (std::size_t i = 0; i < sufijos.size(); i++) {
+      if (w.size() > sufijos[i].size() && termina_con(w, sufijos[i])) {
+        w = w.substr(0, w.size() - sufijos[i].size());
+        break;
       }
     }
-    return resultado;
+
+    // quitar doble consonante final: running -> run
+    if (w.size() >= 2 && w[w.size() - 1] == w[w.size() - 2] &&
+        es_consonante(w[w.size() - 1])) {
+      w = w.substr(0, w.size() - 1);
+    }
+    return w;
   }
 
-  std::string a_minusculas(const std::string &texto) {
-    std::string resultado = texto;
-    std::transform(resultado.begin(), resultado.end(), resultado.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
-    return resultado;
-  }
-
-  std::string aplicar_reglas_stemming(const std::string &palabra) {
-    if (palabra.length() <= 3)
-      return palabra;
-
-    // Buscar en el diccionario de lematización primero
+  //============== LEMATIZACIÓN + STEMMING =================
+  std::string aplicar_lematizacion(const std::string &palabra) {
     auto it = lematizador.find(palabra);
-    if (it != lematizador.end()) {
+    if (it != lematizador.end())
       return it->second;
-    }
 
-    // Reglas básicas de stemming
-    std::string stemmed = palabra;
+    palabras_desconocidas.insert(palabra); // opcional
 
-    // Reglas para plurales - USANDO termina_con EN LUGAR DE ends_with
-    if (stemmed.length() > 3) {
-      if (stemmed.back() == 's') {
-        if (termina_con(stemmed, "sses")) {
-          stemmed = stemmed.substr(0, stemmed.length() - 2);
-        } else if (termina_con(stemmed, "ies")) {
-          stemmed = stemmed.substr(0, stemmed.length() - 3) + "y";
-        } else if (termina_con(stemmed, "es") &&
-                   (termina_con(stemmed, "ches") ||
-                    termina_con(stemmed, "shes") ||
-                    termina_con(stemmed, "xes") ||
-                    termina_con(stemmed, "zes"))) {
-          stemmed = stemmed.substr(0, stemmed.length() - 2);
-        } else if (stemmed[stemmed.length() - 2] != 's') {
-          stemmed = stemmed.substr(0, stemmed.length() - 1);
-        }
-      }
-    }
-
-    // Reglas para verbos - USANDO termina_con EN LUGAR DE ends_with
-    if (stemmed.length() > 4) {
-      if (termina_con(stemmed, "ing")) {
-        if (termina_con(stemmed, "ying")) {
-          stemmed = stemmed.substr(0, stemmed.length() - 3) + "ie";
-        } else {
-          stemmed = stemmed.substr(0, stemmed.length() - 3);
-        }
-      } else if (termina_con(stemmed, "ed")) {
-        if (termina_con(stemmed, "ied")) {
-          stemmed = stemmed.substr(0, stemmed.length() - 3) + "y";
-        } else {
-          stemmed = stemmed.substr(0, stemmed.length() - 2);
-        }
-      }
-    }
-
-    return stemmed;
+    return stemming_simple(palabra);
   }
 
-  bool es_palabra_valida(const std::string &palabra) {
-    if (palabra.length() < 3)
+  //============== FILTRO DE PALABRAS =================
+  bool es_valida(const std::string &p) {
+    if (p.size() < 3)
       return false;
-    if (stopwords.find(palabra) != stopwords.end())
+    if (stopwords.count(p))
       return false;
 
-    // Verificar que sea principalmente alfabética
-    int letras_count = 0;
-    for (char c : palabra) {
+    int letras = 0;
+    for (char c : p)
       if (std::isalpha(c))
-        letras_count++;
-    }
-    return letras_count >= (palabra.length() * 0.7); // 70% letras
+        letras++;
+
+    return letras >= p.size() * 0.7;
   }
 
 public:
+  //============== MÉTODO PRINCIPAL =================
   CVector<std::string> preprocesar_texto(const std::string &texto) {
     CVector<std::string> tokens;
-
     if (texto.empty())
       return tokens;
 
-    // 1. Limpiar caracteres extraños
-    std::string texto_limpio = limpiar_caracteres_extraños(texto);
+    std::string limpio = a_minusculas(limpiar_caracteres(texto));
 
-    // 2. Convertir a minúsculas
-    texto_limpio = a_minusculas(texto_limpio);
-
-    // 3. Tokenización
-    std::string token;
-    for (char c : texto_limpio) {
-      if (std::isalnum(c) || c == '\'' || c == '-') {
+    std::string token = "";
+    for (char c : limpio) {
+      if (std::isalnum(c) || c == '-')
         token += c;
-      } else if (!token.empty()) {
-        // 4. Aplicar lematización/stemming
-        std::string token_procesado = aplicar_reglas_stemming(token);
-
-        // 5. Filtrar palabras válidas
-        if (es_palabra_valida(token_procesado)) {
-          tokens.push_back(token_procesado);
-        }
+      else if (!token.empty()) {
+        std::string t = aplicar_lematizacion(token);
+        if (es_valida(t))
+          tokens.push_back(t);
         token.clear();
       }
     }
 
-    // Último token
     if (!token.empty()) {
-      std::string token_procesado = aplicar_reglas_stemming(token);
-      if (es_palabra_valida(token_procesado)) {
-        tokens.push_back(token_procesado);
-      }
+      std::string t = aplicar_lematizacion(token);
+      if (es_valida(t))
+        tokens.push_back(t);
     }
 
     return tokens;

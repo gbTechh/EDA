@@ -18,7 +18,15 @@ public:
   ~CVector();
   CVector(const CVector &other);
   CVector &operator=(const CVector &other);
-
+  CVector(std::initializer_list<T> initList) {
+    capacity = initList.size();
+    len = initList.size();
+    arr = new T[capacity];
+    size_t i = 0;
+    for (const T &val : initList) {
+      arr[i++] = val;
+    }
+  }
   std::size_t size() const { return len; }
   T &operator[](std::size_t ind);
   const T &operator[](std::size_t ind) const;

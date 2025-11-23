@@ -1,0 +1,10 @@
+{
+  "timestamp": 10800,
+  "ventana": 0,
+  "export_num": 263,
+  "topics": [
+    {"word": "thursday", "frequency": 5},
+    {"word": "gaza", "frequency": 4},
+    {"word": "republican", "frequency": 4}
+  ]
+}

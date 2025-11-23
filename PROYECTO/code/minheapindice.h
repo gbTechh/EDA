@@ -28,7 +28,7 @@ struct StringHash {
     return hash_value;
   }
 };
-template <class T, unsigned long BucketsizeMap = 101, class Compare = ASC<T>>
+template <class T, unsigned long BucketsizeMap = 1999, class Compare = ASC<T>>
 class CMinHeapInd {
 private:
   CVector<T> heap;
@@ -84,7 +84,7 @@ private:
 
 public:
   CMinHeapInd() = default;
-
+  const CVector<T> &get_heap_data() const { return heap; }
   bool exists(const std::string &palabra) { return posiciones.findk(palabra); }
 
   int get_position(const std::string &palabra) {
@@ -195,7 +195,7 @@ public:
       return;
     }
     std::cout << "Contenido del Heap: ";
-    for (int i = 0; i < heap.size(); ++i) {
+    for (std::size_t i = 0; i < heap.size(); ++i) {
       std::cout << heap[i];
       if (i < heap.size() - 1)
         std::cout << ", ";
