@@ -62,7 +62,7 @@ public:
   CInit(Init init);
   void reprocesar_ventana_completa();
   void run(int TIMESLEEP_MS = 100);
-  void runtest(long long OBJETIVO_DOCUMENTOS);
+  void runtest(long long OBJETIVO_DOCUMENTOS, int TIMESLEEP_MS);
   void print();
 };
 
@@ -176,7 +176,7 @@ void CInit<HashSizeVentana, HashSizeCementerio>::run(int TIMESLEEP_MS) {
 
 template <unsigned long HashSizeVentana, unsigned long HashSizeCementerio>
 void CInit<HashSizeVentana, HashSizeCementerio>::runtest(
-    long long OBJETIVO_DOCUMENTOS) {
+    long long OBJETIVO_DOCUMENTOS, int TIMESLEEP_MS) {
   std::string carpeta_docs = "docs";
   std::vector<std::string> archivos_reales =
       leer_documentos_de_carpeta(carpeta_docs);
@@ -237,7 +237,7 @@ void CInit<HashSizeVentana, HashSizeCementerio>::runtest(
       queue_ventana_actual.push(nameDocCache);
 
       for (std::size_t t = 0; t < v_tokens.size(); t++) { // CAMBIARA QUI
-        topic.add_ventana(v_tokens[t]);
+        topic.add_ventana(v_tokens[t], TIMESLEEP_MS);
       }
       for (std::size_t c = 0; c < v_tokens.size(); c++) {
         topic.add_cementerio(v_tokens[c]);
