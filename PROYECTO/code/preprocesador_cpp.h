@@ -115,7 +115,7 @@ private:
     if (it != lematizador.end())
       return it->second;
 
-    palabras_desconocidas.insert(palabra); // opcional
+    palabras_desconocidas.insert(palabra);
 
     return stemming_simple(palabra);
   }

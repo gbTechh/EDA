@@ -73,6 +73,7 @@ public:
 template <unsigned long HashSizeVentana, unsigned long HashSizeCementerio>
 CInit<HashSizeVentana, HashSizeCementerio>::CInit(Init _init)
     : topic(_init.k, _init.bucket_size, _init.documentos_ventana), init(_init) {
+  preprocesador.cargar_diccionario("lematizacion.txt");
 }
 
 template <unsigned long HashSizeVentana, unsigned long HashSizeCementerio>
@@ -155,9 +156,6 @@ void CInit<HashSizeVentana, HashSizeCementerio>::run(int TIMESLEEP_MS) {
       topic.rem_freq(tokens_rem);
       numVentana++;
     }
-    PreprocesadorCPP pre;
-    pre.cargar_diccionario("lemmatization-en.txt");
-
     CVector<std::string> v_tokens =
         preprocesador.preprocesar_texto(texto_completo);
 

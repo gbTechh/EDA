@@ -7,12 +7,12 @@ using namespace std;
 // CONSTANTES GLOBALES CONTROLADAS DESDE MAIN
 const unsigned long HASH_SIZE_VENTANA = 30011;
 const unsigned long HASH_SIZE_CEMENTERIO = 99991;
-const int BUCKET_SIZE = 200;
+const int BUCKET_SIZE = 100;
 
 // cosntantes para el topic
 const int K = 100;
 const int DOCUMENTOS_VENTANA = 1000;
-int TIMESLEEP_MS = 100;
+int TIMESLEEP_MS = 50;
 
 // cosntante para app.runtest(objetivo_documentos)
 const long long OBJETIVO_DOCUMENTOS = 100000;
@@ -22,7 +22,8 @@ int main() {
 
   Init init = {K, BUCKET_SIZE, DOCUMENTOS_VENTANA, 0};
   CInit<HASH_SIZE_VENTANA, HASH_SIZE_CEMENTERIO> app(init);
-  app.runtest(OBJETIVO_DOCUMENTOS, TIMESLEEP_MS);
+  app.run(TIMESLEEP_MS);
+  // app.runtest(OBJETIVO_DOCUMENTOS, TIMESLEEP_MS);
 
   auto fin = chrono::high_resolution_clock::now();
   auto duracion = chrono::duration_cast<chrono::milliseconds>(fin - inicio);
