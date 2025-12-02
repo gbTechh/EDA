@@ -1,0 +1,16 @@
+archivo,algoritmo,tiempo_ejecucion_ms,Dataset,Metodo,Carpeta
+espiral_3d.csv,DBSCAN,73,espiral_3d,DBSCAN,resultados_dbscan
+lunas_3d.csv,DBSCAN,71,lunas_3d,DBSCAN,resultados_dbscan
+anillo_centro_4d.csv,DBSCAN,398,anillo_centro_4d,DBSCAN,resultados_dbscan
+densidad_variable_3d.csv,DBSCAN,76,densidad_variable_3d,DBSCAN,resultados_dbscan
+hiperesferas_4d_modificado.csv,DBSCAN,351,hiperesferas_4d_modificado,DBSCAN,resultados_dbscan
+circulos_3d.csv,DBSCAN,79,circulos_3d,DBSCAN,resultados_dbscan
+puentes_4d.csv,DBSCAN,367,puentes_4d,DBSCAN,resultados_dbscan
+hiperesferas_4d.csv,DBSCAN,349,hiperesferas_4d,DBSCAN,resultados_dbscan
+espiral_3d.csv,DBSCAN_KDTree,7,espiral_3d,DBSCAN_KDTree,resultados_dbscan_kdtree
+lunas_3d.csv,DBSCAN_KDTree,9,lunas_3d,DBSCAN_KDTree,resultados_dbscan_kdtree
+anillo_centro_4d.csv,DBSCAN_KDTree,93,anillo_centro_4d,DBSCAN_KDTree,resultados_dbscan_kdtree
+densidad_variable_3d.csv,DBSCAN_KDTree,26,densidad_variable_3d,DBSCAN_KDTree,resultados_dbscan_kdtree
+circulos_3d.csv,DBSCAN_KDTree,12,circulos_3d,DBSCAN_KDTree,resultados_dbscan_kdtree
+puentes_4d.csv,DBSCAN_KDTree,84,puentes_4d,DBSCAN_KDTree,resultados_dbscan_kdtree
+hiperesferas_4d.csv,DBSCAN_KDTree,87,hiperesferas_4d,DBSCAN_KDTree,resultados_dbscan_kdtree

@@ -1,0 +1,16 @@
+Dataset,Metodo,Dimensiones,Puntos,Clusters,Outliers,Silhouette,Archivo
+densidad_variable_3d,Búsqueda Lineal,3,1000,3,2,0.7489736130284517,./data/resultados_dbscan/densidad_variable_3d_dbscan.csv
+espiral_3d,Búsqueda Lineal,3,1000,1,0,,./data/resultados_dbscan/espiral_3d_dbscan.csv
+circulos_3d,Búsqueda Lineal,3,1000,2,0,0.10596442885497191,./data/resultados_dbscan/circulos_3d_dbscan.csv
+hiperesferas_4d,Búsqueda Lineal,4,2000,2,0,0.03096212841637084,./data/resultados_dbscan/hiperesferas_4d_dbscan.csv
+hiperesferas_4d_modificado,Búsqueda Lineal,4,2000,7,1291,0.4658529935018875,./data/resultados_dbscan/hiperesferas_4d_modificado_dbscan.csv
+puentes_4d,Búsqueda Lineal,4,2000,1,388,,./data/resultados_dbscan/puentes_4d_dbscan.csv
+lunas_3d,Búsqueda Lineal,3,1000,2,15,0.31760733118777695,./data/resultados_dbscan/lunas_3d_dbscan.csv
+anillo_centro_4d,Búsqueda Lineal,4,2000,2,0,0.31341158607468994,./data/resultados_dbscan/anillo_centro_4d_dbscan.csv
+densidad_variable_3d,KD-Tree,3,1000,3,2,0.7489736130284517,./data/resultados_dbscan_kdtree/densidad_variable_3d_dbscan.csv
+espiral_3d,KD-Tree,3,1000,1,0,,./data/resultados_dbscan_kdtree/espiral_3d_dbscan.csv
+circulos_3d,KD-Tree,3,1000,2,0,0.10596442885497191,./data/resultados_dbscan_kdtree/circulos_3d_dbscan.csv
+hiperesferas_4d,KD-Tree,4,2000,2,0,0.03096212841637084,./data/resultados_dbscan_kdtree/hiperesferas_4d_dbscan.csv
+puentes_4d,KD-Tree,4,2000,1,388,,./data/resultados_dbscan_kdtree/puentes_4d_dbscan.csv
+lunas_3d,KD-Tree,3,1000,2,11,0.3170916548865572,./data/resultados_dbscan_kdtree/lunas_3d_dbscan.csv
+anillo_centro_4d,KD-Tree,4,2000,2,0,0.31341158607468994,./data/resultados_dbscan_kdtree/anillo_centro_4d_dbscan.csv
